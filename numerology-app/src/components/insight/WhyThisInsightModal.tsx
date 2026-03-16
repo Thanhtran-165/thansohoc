@@ -1,0 +1,218 @@
+/**
+ * WhyThisInsightModal Component
+ * Explains how a specific insight was generated
+ *
+ * Phase 5: Real data from database via persistence layer
+ */
+
+import { useState, useEffect } from 'react';
+import Modal from '@components/common/Modal';
+import { getWhyThisInsight } from '@services/insight/persistence';
+import { WhyThisInsight as ServiceWhyThisInsight } from '@services/insight/types';
+
+interface WhyThisInsightModalProps {
+  insightId: string;
+  onClose: () => void;
+}
+
+export function WhyThisInsightModal({
+  insightId,
+  onClose,
+}: WhyThisInsightModalProps) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<ServiceWhyThisInsight | null>(null);
+
+  useEffect(() => {
+    const fetchWhyThis = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch real WhyThisInsight data from database
+        const whyThisData = await getWhyThisInsight(insightId);
+
+        if (!whyThisData) {
+          setError('No explanation available for this insight.');
+          setData(null);
+        } else {
+          setData(whyThisData);
+        }
+      } catch (err) {
+        setError('Failed to load explanation');
+        console.error('Failed to load WhyThisInsight:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWhyThis();
+  }, [insightId]);
+
+  if (loading) {
+    return (
+      <Modal isOpen={true} onClose={onClose} title="Why This Insight">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500" />
+        </div>
+      </Modal>
+    );
+  }
+
+  if (error) {
+    return (
+      <Modal isOpen={true} onClose={onClose} title="Why This Insight">
+        <div className="text-center py-8 text-red-500">
+          {error}
+        </div>
+      </Modal>
+    );
+  }
+
+  // Handle no data state (when insight exists but why_this doesn't)
+  if (!data) {
+    return (
+      <Modal isOpen={true} onClose={onClose} title="Why This Insight">
+        <div className="text-center py-8">
+          <p className="text-gray-500">
+            Explanation data is not available for this insight.
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            This may happen for fallback insights or insights generated before the explainability feature was added.
+          </p>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Why This Insight">
+      <div className="max-h-[70vh] overflow-y-auto">
+        {/* Data Sources */}
+        <section className="mb-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Data Sources</h4>
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">Profile Completeness</span>
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 transition-all"
+                    style={{ width: `${data.data_sources.profile_completeness * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {(data.data_sources.profile_completeness * 100).toFixed(0)}%
+                </span>
+              </div>
+            </div>
+            <div className="text-xs text-gray-500">
+              Available: {data.data_sources.data_available.join(', ')}
+            </div>
+          </div>
+        </section>
+
+        {/* Calculated Claims */}
+        <section className="mb-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Calculated Claims</h4>
+          <div className="space-y-3">
+            {data.calculated_claims.map((claim, index) => (
+              <div key={index} className="bg-blue-50 rounded-lg p-4">
+                <p className="text-sm font-medium text-blue-800 mb-2">
+                  {claim.claim}
+                </p>
+                <div className="text-xs text-blue-600 bg-blue-100 rounded px-2 py-1 font-mono">
+                  {claim.formula}
+                </div>
+                {claim.inputs && Object.keys(claim.inputs).length > 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    <span className="font-medium">Inputs:</span>{' '}
+                    {Object.entries(claim.inputs).map(([k, v]) => `${k}=${v}`).join(', ')}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Interpretation Basis */}
+        <section className="mb-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Interpretation Basis</h4>
+          <div className="bg-purple-50 rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-500">Style:</span>
+                <span className="ml-2 font-medium text-purple-700 capitalize">
+                  {data.interpretation_basis.style_preference}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Context:</span>
+                <span className="ml-2 text-purple-700 text-xs">
+                  {data.interpretation_basis.numerology_context.join(', ')}
+                </span>
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              Model v{data.interpretation_basis.model_version} •
+              Prompt v{data.interpretation_basis.prompt_version}
+            </div>
+          </div>
+        </section>
+
+        {/* Confidence Breakdown */}
+        <section className="mb-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Confidence Breakdown</h4>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Data Quality</span>
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 rounded-full"
+                    style={{ width: `${data.confidence_breakdown.data * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {(data.confidence_breakdown.data * 100).toFixed(0)}%
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Interpretation Confidence</span>
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-purple-500 rounded-full"
+                    style={{ width: `${data.confidence_breakdown.interpretation * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {(data.confidence_breakdown.interpretation * 100).toFixed(0)}%
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+              <span className="text-sm font-medium text-gray-700">Overall</span>
+              <span className="text-lg font-bold text-primary-600">
+                {(data.confidence_breakdown.overall * 100).toFixed(0)}%
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Explanation */}
+        {data.explanation && (
+          <section>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Summary</h4>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {data.explanation}
+            </p>
+          </section>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+export default WhyThisInsightModal;

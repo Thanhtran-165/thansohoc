@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Claim badge styles */
+.claim-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+}
+
+.claim-badge-calculated {
+  @apply bg-emerald-100 text-emerald-800;
+}
+
+.claim-badge-interpreted {
+  @apply bg-amber-100 text-amber-800;
+}
+
+.claim-badge-exploratory {
+  @apply bg-purple-100 text-purple-800;
+}
+
+/* Layer toggle styles */
+.layer-toggle {
+  @apply inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors;
+}
+
+.layer-toggle-inactive {
+  @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+}
+
+.layer-toggle-active {
+  @apply bg-primary-500 text-white;
+}
+
+/* Slider styles */
+input[type="range"] {
+  @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply w-4 h-4 bg-primary-500 rounded-full appearance-none cursor-pointer;
+}
+
+/* Animation utilities */
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .transition-colors-fast {
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+}
