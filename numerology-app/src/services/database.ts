@@ -1,18 +1,49 @@
 /**
  * Database Service
  * SQLite database connection and query management for local-first storage
+ *
+ * NOTE: In Tauri, we use localStorage as a fallback since better-sqlite3
+ * is a Node.js module and won't work in the webview context.
+ * For production, consider using tauri-plugin-sql for proper SQLite support.
  */
 
-import Database from 'better-sqlite3';
-import { join, dirname } from 'path';
-import { mkdirSync } from 'fs';
 import { logger } from '@utils/logger';
 
+// Check if we're in a Node.js environment (can use SQLite)
+const canUseSQLite = typeof process !== 'undefined' && process.versions?.node;
+
 // Database instance (singleton)
-let db: Database.Database | null = null;
+let db: any = null;
 
 // Database path
 const DB_NAME = 'data.db';
+
+// Lazy-loaded modules for Node.js environment
+let Database: any = null;
+let pathJoin: any = null;
+let pathDirname: any = null;
+let fsMkdirSync: any = null;
+
+/**
+ * Initialize Node.js modules (only in Node.js environment)
+ */
+async function loadNodeModules(): Promise<boolean> {
+  if (!canUseSQLite) return false;
+
+  try {
+    const betterSqlite3 = await import('better-sqlite3');
+    Database = betterSqlite3.default;
+    const path = await import('path');
+    pathJoin = path.join;
+    pathDirname = path.dirname;
+    const fs = await import('fs');
+    fsMkdirSync = fs.mkdirSync;
+    return true;
+  } catch (error) {
+    logger.warn('Failed to load Node.js modules, using localStorage fallback');
+    return false;
+  }
+}
 
 /**
  * Get the database file path
@@ -28,7 +59,7 @@ async function getDatabasePath(): Promise<string> {
       // Dynamic import for Tauri API v2 (only loads when in Tauri environment)
       const { appDataDir } = await import('@tauri-apps/api/path');
       const appDir = await appDataDir();
-      return join(appDir, 'numerology-app', DB_NAME);
+      return pathJoin(appDir, 'numerology-app', DB_NAME);
     } catch (error) {
       logger.warn('Tauri API not available, using fallback path');
     }
@@ -36,14 +67,25 @@ async function getDatabasePath(): Promise<string> {
 
   // Fallback for development without Tauri (web-only mode)
   logger.info('Running in web-only mode, using temp database path');
-  return join(process.cwd(), 'temp-data', DB_NAME);
+  return pathJoin(process.cwd(), 'temp-data', DB_NAME);
 }
 
 /**
  * Initialize the database connection and run migrations
  */
-export async function initDatabase(): Promise<Database.Database> {
+export async function initDatabase(): Promise<any> {
   if (db) {
+    return db;
+  }
+
+  // Try to load SQLite in Node.js environment
+  const useSQLite = await loadNodeModules();
+
+  if (!useSQLite) {
+    // Use localStorage as fallback (browser/Tauri webview)
+    logger.info('Using localStorage as database fallback');
+    db = { type: 'localStorage' };
+    await runMigrationsLocalStorage();
     return db;
   }
 
@@ -52,8 +94,8 @@ export async function initDatabase(): Promise<Database.Database> {
 
   try {
     // Ensure parent directory exists
-    const dbDir = dirname(dbPath);
-    mkdirSync(dbDir, { recursive: true });
+    const dbDir = pathDirname(dbPath);
+    fsMkdirSync(dbDir, { recursive: true });
 
     // Create database connection
     db = new Database(dbPath);
@@ -79,7 +121,7 @@ export async function initDatabase(): Promise<Database.Database> {
  * Get the database instance
  * Throws if database is not initialized
  */
-export function getDatabase(): Database.Database {
+export function getDatabase(): any {
   if (!db) {
     throw new Error('Database not initialized. Call initDatabase() first.');
   }
@@ -90,17 +132,33 @@ export function getDatabase(): Database.Database {
  * Close the database connection
  */
 export function closeDatabase(): void {
-  if (db) {
+  if (db && db.type !== 'localStorage') {
     db.close();
-    db = null;
-    logger.info('Database connection closed');
+  }
+  db = null;
+  logger.info('Database connection closed');
+}
+
+/**
+ * Run migrations for localStorage fallback
+ */
+async function runMigrationsLocalStorage(): Promise<void> {
+  const initialized = localStorage.getItem('db_initialized');
+  if (!initialized) {
+    // Set default app settings
+    const now = new Date().toISOString();
+    localStorage.setItem('app-schema-version', JSON.stringify({ value: '1.0.0', updated_at: now }));
+    localStorage.setItem('app-fallback-mode', JSON.stringify({ value: 'true', updated_at: now }));
+    localStorage.setItem('app-onboarding-step', JSON.stringify({ value: '0', updated_at: now }));
+    localStorage.setItem('db_initialized', 'true');
+    logger.info('localStorage migrations completed');
   }
 }
 
 /**
- * Run database migrations
+ * Run database migrations (SQLite only)
  */
-async function runMigrations(database: Database.Database): Promise<void> {
+async function runMigrations(database: any): Promise<void> {
   // Get current schema version
   const getVersion = database.prepare(`
     SELECT value FROM app_settings WHERE key = 'schema_version'
@@ -129,9 +187,9 @@ async function runMigrations(database: Database.Database): Promise<void> {
 }
 
 /**
- * Migration 001: Initial Schema
+ * Migration 001: Initial Schema (SQLite only)
  */
-function runMigration001(database: Database.Database): void {
+function runMigration001(database: any): void {
   logger.info('Running migration 001: Initial schema');
 
   const migrations = database.transaction(() => {
@@ -315,29 +373,52 @@ function runMigration001(database: Database.Database): void {
 
 /**
  * Generic query helpers
+ * Works with both SQLite and localStorage modes
  */
 export const dbQuery = {
   /**
    * Get a single row
    */
   get<T>(sql: string, params: unknown[] = []): T | undefined {
-    const stmt = getDatabase().prepare(sql);
+    const database = getDatabase();
+    if (database.type === 'localStorage') {
+      // localStorage mode - simple key-value lookup
+      const key = params[0] as string;
+      const value = localStorage.getItem(key);
+      return value ? JSON.parse(value) : undefined;
+    }
+    const stmt = database.prepare(sql);
     return stmt.get(...params) as T | undefined;
   },
 
   /**
    * Get multiple rows
    */
-  all<T>(sql: string, params: unknown[] = []): T[] {
-    const stmt = getDatabase().prepare(sql);
-    return stmt.all(...params) as T[];
+  all<T>(_sql: string, _params: unknown[] = []): T[] {
+    const database = getDatabase();
+    if (database.type === 'localStorage') {
+      // localStorage mode - return empty array for now
+      return [] as T[];
+    }
+    const stmt = database.prepare(_sql);
+    return stmt.all(..._params) as T[];
   },
 
   /**
    * Run a statement (INSERT, UPDATE, DELETE)
    */
-  run(sql: string, params: unknown[] = []): Database.RunResult {
-    const stmt = getDatabase().prepare(sql);
+  run(_sql: string, params: unknown[] = []): any {
+    const database = getDatabase();
+    if (database.type === 'localStorage') {
+      // localStorage mode - store as key-value
+      const key = params[0] as string;
+      const value = params[1];
+      if (key && value !== undefined) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+      return { changes: 1 };
+    }
+    const stmt = database.prepare(_sql);
     return stmt.run(...params);
   },
 
@@ -345,17 +426,36 @@ export const dbQuery = {
    * Run multiple statements in a transaction
    */
   transaction<T>(fn: () => T): T {
-    return getDatabase().transaction(fn)();
+    const database = getDatabase();
+    if (database.type === 'localStorage') {
+      // localStorage mode - just run the function
+      return fn();
+    }
+    return database.transaction(fn)();
   },
 
   /**
    * Run a prepared statement multiple times with different params
    */
-  batch(sql: string, paramsArray: unknown[][]): Database.RunResult[] {
-    const stmt = getDatabase().prepare(sql);
-    const results: Database.RunResult[] = [];
+  batch(_sql: string, paramsArray: unknown[][]): any[] {
+    const database = getDatabase();
+    if (database.type === 'localStorage') {
+      // localStorage mode - store each as key-value
+      const results: any[] = [];
+      for (const params of paramsArray) {
+        const key = params[0] as string;
+        const value = params[1];
+        if (key && value !== undefined) {
+          localStorage.setItem(key, JSON.stringify(value));
+        }
+        results.push({ changes: 1 });
+      }
+      return results;
+    }
+    const stmt = database.prepare(_sql);
+    const results: any[] = [];
 
-    const batchTx = getDatabase().transaction(() => {
+    const batchTx = database.transaction(() => {
       for (const params of paramsArray) {
         results.push(stmt.run(...params));
       }

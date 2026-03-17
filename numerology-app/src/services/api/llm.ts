@@ -221,6 +221,32 @@ export class LLMClient {
 
 /**
  * Create a default LLM client instance
+ * Uses config manager if no API key provided
+ */
+export async function createLLMClientAsync(apiKey?: string): Promise<LLMClient> {
+  let key = apiKey;
+
+  if (!key) {
+    // Try to get from config manager
+    const { configManager } = await import('../config');
+    await configManager.init();
+    key = configManager.getConfig().llm.apiKey;
+  }
+
+  if (!key) {
+    // Fallback to environment variable
+    key = process.env.DEEPSEEK_API_KEY || '';
+  }
+
+  if (!key) {
+    logger.warn('No DeepSeek API key provided. LLM client will not work.');
+  }
+
+  return new LLMClient(key);
+}
+
+/**
+ * Create a default LLM client instance (synchronous version)
  */
 export function createLLMClient(apiKey?: string): LLMClient {
   const key = apiKey || process.env.DEEPSEEK_API_KEY || '';

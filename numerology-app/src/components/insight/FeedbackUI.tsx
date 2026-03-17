@@ -1,10 +1,11 @@
 /**
  * FeedbackUI Component
- * Star rating and feedback collection for insights
+ * Star rating and feedback collection for insights - Vietnamese UI
  */
 
 import { useState } from 'react';
 import { ClaimType } from '@/types';
+import messages from '@localization';
 
 interface FeedbackUIProps {
   insightId: string;
@@ -13,13 +14,13 @@ interface FeedbackUIProps {
   compact?: boolean;
 }
 
-const EMOTION_TAGS = [
-  'helpful',
-  'inspiring',
-  'accurate',
-  'confusing',
-  'too vague',
-  'too detailed',
+const getFeedbackTags = () => [
+  messages.feedback.tags.helpful,
+  messages.feedback.tags.inspiring,
+  messages.feedback.tags.accurate,
+  messages.feedback.tags.confusing,
+  messages.feedback.tags.tooVague,
+  messages.feedback.tags.tooDetailed,
 ];
 
 export function FeedbackUI({
@@ -79,10 +80,16 @@ export function FeedbackUI({
     }
   };
 
+  const claimTypeLabels: Record<ClaimType, string> = {
+    calculated: messages.claimTypes.calculated,
+    interpreted: messages.claimTypes.interpreted,
+    exploratory: messages.claimTypes.exploratory,
+  };
+
   return (
     <div className={`${compact ? 'flex items-center gap-2' : ''}`}>
       {/* Star Rating */}
-      <div className="flex items-center gap-1" role="group" aria-label="Rate this insight">
+      <div className="flex items-center gap-1" role="group" aria-label={messages.feedback.rateInsight}>
         {[1, 2, 3, 4, 5].map((value) => (
           <button
             key={value}
@@ -120,7 +127,7 @@ export function FeedbackUI({
           {/* Most Useful Claim Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Most useful claim type?
+              {messages.feedback.mostUsefulClaim}
             </label>
             <div className="flex gap-2" role="group" aria-label="Select most useful claim type">
               {(['calculated', 'interpreted', 'exploratory'] as ClaimType[]).map((type) => (
@@ -128,14 +135,14 @@ export function FeedbackUI({
                   key={type}
                   onClick={() => setMostUsefulClaim(type)}
                   aria-pressed={mostUsefulClaim === type}
-                  aria-label={`${type.charAt(0).toUpperCase() + type.slice(1)} claim type`}
+                  aria-label={claimTypeLabels[type]}
                   className={`px-3 py-1.5 text-sm rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                     mostUsefulClaim === type
                       ? 'bg-primary-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {claimTypeLabels[type]}
                 </button>
               ))}
             </div>
@@ -144,10 +151,10 @@ export function FeedbackUI({
           {/* Tags */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tags
+              {messages.feedback.tags}
             </label>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Feedback tags">
-              {EMOTION_TAGS.map((tag) => (
+              {getFeedbackTags().map((tag) => (
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
@@ -167,12 +174,12 @@ export function FeedbackUI({
           {/* Feedback Text */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Additional feedback (optional)
+              {messages.feedback.additionalFeedback}
             </label>
             <textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="What could make this insight more helpful?"
+              placeholder={messages.feedback.placeholder}
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
               rows={2}
             />
@@ -184,7 +191,7 @@ export function FeedbackUI({
             disabled={isSubmitting}
             className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+            {isSubmitting ? messages.feedback.submitting : messages.feedback.submit}
           </button>
         </div>
       )}

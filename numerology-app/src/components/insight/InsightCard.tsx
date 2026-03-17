@@ -1,6 +1,6 @@
 /**
  * InsightCard Component
- * Displays a daily insight with Quick, Standard, and optional Deep layers
+ * Displays a daily insight with Quick, Standard, and optional Deep layers - Vietnamese UI
  */
 
 import { useState, useEffect } from 'react';
@@ -9,6 +9,7 @@ import { InsightLayerContent } from './InsightLayerContent';
 import { WhyThisInsightModal } from './WhyThisInsightModal';
 import { FeedbackUI } from './FeedbackUI';
 import { useUserStore } from '@stores/userStore';
+import messages from '@localization';
 
 type LayerType = 'quick' | 'standard' | 'deep';
 
@@ -43,9 +44,9 @@ export function InsightCard({
 
   // Layer toggle buttons
   const layerButtons: Array<{ type: LayerType; label: string; available: boolean }> = [
-    { type: 'quick', label: 'Quick', available: true },
-    { type: 'standard', label: 'Standard', available: true },
-    { type: 'deep', label: 'Deep', available: hasDeepLayer },
+    { type: 'quick', label: messages.insight.layers.quick, available: true },
+    { type: 'standard', label: messages.insight.layers.standard, available: true },
+    { type: 'deep', label: messages.insight.layers.deep, available: hasDeepLayer },
   ];
 
   return (
@@ -60,7 +61,7 @@ export function InsightCard({
               </span>
               {insight.is_fallback && (
                 <span className="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-                  Cached
+                  {messages.insight.cached}
                 </span>
               )}
             </div>
@@ -69,7 +70,7 @@ export function InsightCard({
             </h3>
           </div>
           <div className="text-right text-sm text-gray-500">
-            <div>Personal Day {insight.personal_day}</div>
+            <div>{messages.insight.personalDay} {insight.personal_day}</div>
             <div className="text-xs">{insight.date}</div>
           </div>
         </div>
@@ -83,7 +84,7 @@ export function InsightCard({
               key={type}
               onClick={() => available && setActiveLayer(type)}
               disabled={!available}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                 activeLayer === type
                   ? 'bg-primary-500 text-white'
                   : available
@@ -92,7 +93,7 @@ export function InsightCard({
               }`}
             >
               {label}
-              {type === 'deep' && !available && ' (on-demand)'}
+              {type === 'deep' && !available && ` ${messages.insight.layers.deepOnDemand}`}
             </button>
           ))}
         </div>
@@ -109,7 +110,7 @@ export function InsightCard({
         {/* Exploratory Questions for Deep Layer */}
         {activeLayer === 'deep' && insight.layers.deep?.exploratory_questions && (
           <div className="mt-6 pt-4 border-t border-gray-100">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Questions to Explore</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.questionsToExplore}</h4>
             <ul className="space-y-2">
               {insight.layers.deep.exploratory_questions.map((question, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
@@ -125,7 +126,7 @@ export function InsightCard({
       {/* Confidence Bar */}
       <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">Overall Confidence</span>
+          <span className="text-gray-500">{messages.insight.overallConfidence}</span>
           <div className="flex items-center gap-2">
             <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
@@ -145,12 +146,12 @@ export function InsightCard({
         {showWhyModal && (
           <button
             onClick={() => setShowWhyThis(true)}
-            className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+            className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Why This Insight?
+            {messages.insight.whyThis}
           </button>
         )}
 
@@ -167,7 +168,7 @@ export function InsightCard({
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Feedback received
+            {messages.insight.feedbackReceived}
           </span>
         )}
       </div>

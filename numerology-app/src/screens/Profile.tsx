@@ -1,6 +1,6 @@
 /**
  * Profile Screen
- * User profile view and edit
+ * User profile view and edit - Vietnamese UI
  *
  * Phase 4: Full implementation with real numerology calculations
  */
@@ -11,6 +11,7 @@ import { useInsightStore } from '@stores/insightStore';
 import { calculateCoreNumbers } from '@services/numerology';
 import { CoreNumerologyResult } from '@services/numerology';
 import { StylePreference, InsightLength } from '@/types';
+import messages from '@localization';
 
 export default function Profile() {
   const { profile, isLoading, updateProfile } = useUserStore();
@@ -38,7 +39,7 @@ export default function Profile() {
   if (!profile) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No profile found. Please complete onboarding.</p>
+        <p className="text-gray-500">{messages.profile.noProfile}</p>
       </div>
     );
   }
@@ -71,9 +72,9 @@ export default function Profile() {
     <div className="max-w-2xl mx-auto">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{messages.profile.title}</h1>
         <p className="text-gray-600 mt-1">
-          Manage your personal information and preferences
+          {messages.profile.subtitle}
         </p>
       </div>
 
@@ -93,19 +94,19 @@ export default function Profile() {
               {profile.full_name}
             </h2>
             <p className="text-gray-500 mt-1">
-              Born: {new Date(profile.date_of_birth).toLocaleDateString()}
+              {messages.profile.born}: {new Date(profile.date_of_birth).toLocaleDateString('vi-VN')}
             </p>
             {/* Show today's cyclic numbers if available */}
             {todayInsight && (
               <div className="mt-2 flex gap-3 text-sm">
                 <span className="text-gray-500">
-                  Personal Day: <span className="font-medium text-primary-600">{todayInsight.personal_day}</span>
+                  {messages.dashboard.numerology.personalDay}: <span className="font-medium text-primary-600">{todayInsight.personal_day}</span>
                 </span>
                 <span className="text-gray-500">
-                  Month: <span className="font-medium text-primary-600">{todayInsight.personal_month}</span>
+                  {messages.dashboard.numerology.personalMonth}: <span className="font-medium text-primary-600">{todayInsight.personal_month}</span>
                 </span>
                 <span className="text-gray-500">
-                  Year: <span className="font-medium text-primary-600">{todayInsight.personal_year}</span>
+                  {messages.dashboard.numerology.personalYear}: <span className="font-medium text-primary-600">{todayInsight.personal_year}</span>
                 </span>
               </div>
             )}
@@ -117,14 +118,14 @@ export default function Profile() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            Preferences
+            {messages.profile.preferences}
           </h3>
           {!isEditing && (
             <button
               onClick={handleStartEdit}
               className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
             >
-              Edit
+              {messages.actions.edit}
             </button>
           )}
         </div>
@@ -134,32 +135,32 @@ export default function Profile() {
             {/* Style Preference */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Insight Style
+                {messages.profile.insightStyle}
               </label>
               <select
                 value={editForm.style_preference}
                 onChange={(e) => setEditForm({ ...editForm, style_preference: e.target.value as StylePreference })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="gentle">Gentle</option>
-                <option value="direct">Direct</option>
-                <option value="practical">Practical</option>
-                <option value="spiritual">Spiritual</option>
+                <option value="gentle">{messages.onboarding.preferences.styles.gentle.label}</option>
+                <option value="direct">{messages.onboarding.preferences.styles.direct.label}</option>
+                <option value="practical">{messages.onboarding.preferences.styles.practical.label}</option>
+                <option value="spiritual">{messages.onboarding.preferences.styles.spiritual.label}</option>
               </select>
             </div>
 
             {/* Insight Length */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Insight Length
+                {messages.profile.insightLength}
               </label>
               <select
                 value={editForm.insight_length}
                 onChange={(e) => setEditForm({ ...editForm, insight_length: e.target.value as InsightLength })}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="brief">Brief</option>
-                <option value="detailed">Detailed</option>
+                <option value="brief">{messages.onboarding.preferences.lengths.brief.label}</option>
+                <option value="detailed">{messages.onboarding.preferences.lengths.detailed.label}</option>
               </select>
             </div>
 
@@ -169,29 +170,29 @@ export default function Profile() {
                 onClick={handleCancelEdit}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
               >
-                Cancel
+                {messages.actions.cancel}
               </button>
               <button
                 onClick={handleSaveEdit}
                 className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors"
               >
-                Save Changes
+                {messages.profile.saveChanges}
               </button>
             </div>
           </div>
         ) : (
           <div className="space-y-0">
             <PreferenceRow
-              label="Insight Style"
+              label={messages.profile.insightStyle}
               value={formatStylePreference(profile.style_preference)}
             />
             <PreferenceRow
-              label="Insight Length"
+              label={messages.profile.insightLength}
               value={formatInsightLength(profile.insight_length)}
             />
             <PreferenceRow
-              label="Language"
-              value={profile.language === 'en' ? 'English' : 'Vietnamese'}
+              label={messages.profile.language}
+              value={profile.language === 'en' ? messages.profile.languageEn : messages.profile.languageVi}
             />
           </div>
         )}
@@ -200,45 +201,45 @@ export default function Profile() {
       {/* Numerology Profile */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Your Core Numbers
+          {messages.profile.coreNumbers}
         </h3>
 
         {coreNumbers ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <CoreNumberCard
-              label="Life Path"
+              label={messages.profile.coreNumbersLabel.lifePath}
               value={coreNumbers.life_path}
-              description="Your life's purpose"
+              description={messages.profile.coreNumberDescriptions.lifePath}
             />
             <CoreNumberCard
-              label="Destiny"
+              label={messages.profile.coreNumbersLabel.destiny}
               value={coreNumbers.destiny_number}
-              description="Your ultimate goal"
+              description={messages.profile.coreNumberDescriptions.destiny}
             />
             <CoreNumberCard
-              label="Soul Urge"
+              label={messages.profile.coreNumbersLabel.soulUrge}
               value={coreNumbers.soul_urge}
-              description="Inner desires"
+              description={messages.profile.coreNumberDescriptions.soulUrge}
             />
             <CoreNumberCard
-              label="Personality"
+              label={messages.profile.coreNumbersLabel.personality}
               value={coreNumbers.personality_number}
-              description="Outer persona"
+              description={messages.profile.coreNumberDescriptions.personality}
             />
             <CoreNumberCard
-              label="Birthday"
+              label={messages.profile.coreNumbersLabel.birthday}
               value={coreNumbers.birthday_number}
-              description="Special gift"
+              description={messages.profile.coreNumberDescriptions.birthday}
             />
             <CoreNumberCard
-              label="Maturity"
+              label={messages.profile.coreNumbersLabel.maturity}
               value={coreNumbers.maturity_number}
-              description="Later life path"
+              description={messages.profile.coreNumberDescriptions.maturity}
             />
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            <p>Complete your profile to see your core numbers.</p>
+            <p>{messages.profile.completeProfile}</p>
           </div>
         )}
       </div>
@@ -249,18 +250,18 @@ export default function Profile() {
 // Format helpers
 function formatStylePreference(style: StylePreference): string {
   const labels: Record<StylePreference, string> = {
-    gentle: 'Gentle',
-    direct: 'Direct',
-    practical: 'Practical',
-    spiritual: 'Spiritual',
+    gentle: messages.onboarding.preferences.styles.gentle.label,
+    direct: messages.onboarding.preferences.styles.direct.label,
+    practical: messages.onboarding.preferences.styles.practical.label,
+    spiritual: messages.onboarding.preferences.styles.spiritual.label,
   };
   return labels[style] || style;
 }
 
 function formatInsightLength(length: InsightLength): string {
   const labels: Record<InsightLength, string> = {
-    brief: 'Brief',
-    detailed: 'Detailed',
+    brief: messages.onboarding.preferences.lengths.brief.label,
+    detailed: messages.onboarding.preferences.lengths.detailed.label,
   };
   return labels[length] || length;
 }
@@ -290,7 +291,7 @@ function CoreNumberCard({
     <div className="text-center p-4 bg-gray-50 rounded-lg">
       <div className={`text-2xl font-bold mb-1 ${isMaster ? 'text-accent-500' : 'text-primary-600'}`}>
         {value}
-        {isMaster && <span className="text-xs ml-1 text-accent-400">Master</span>}
+        {isMaster && <span className="text-xs ml-1 text-accent-400">{messages.profile.masterNumber}</span>}
       </div>
       <div className="text-sm font-medium text-gray-900">{label}</div>
       <div className="text-xs text-gray-500 mt-1">{description}</div>

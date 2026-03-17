@@ -1,10 +1,25 @@
 /**
  * Header Component
- * Top navigation bar with app title and user info
+ * Top navigation bar with app title and user info - Vietnamese UI
  */
 
 import { useUserStore } from '@stores/userStore';
 import { formatDateDisplay } from '@utils/date';
+import messages from '@localization';
+
+// Vietnamese day names
+const DAY_NAMES = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+const MONTH_NAMES = [
+  'tháng 1', 'tháng 2', 'tháng 3', 'tháng 4', 'tháng 5', 'tháng 6',
+  'tháng 7', 'tháng 8', 'tháng 9', 'tháng 10', 'tháng 11', 'tháng 12'
+];
+
+function formatVietnameseDate(date: Date): string {
+  const dayName = DAY_NAMES[date.getDay()];
+  const day = date.getDate();
+  const month = MONTH_NAMES[date.getMonth()];
+  return `${dayName}, ngày ${day} ${month}`;
+}
 
 export default function Header() {
   const { profile } = useUserStore();
@@ -18,7 +33,7 @@ export default function Header() {
             <span className="text-white font-bold text-sm">N</span>
           </div>
           <h1 className="text-lg font-semibold text-gray-900">
-            Numerology Intelligence
+            {messages.app.name}
           </h1>
         </div>
 
@@ -26,7 +41,7 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {/* Date */}
           <span className="text-sm text-gray-500">
-            {formatDateDisplay(new Date(), 'EEEE, MMMM d')}
+            {formatVietnameseDate(new Date())}
           </span>
 
           {/* User */}

@@ -1,11 +1,13 @@
 /**
  * Settings Screen
- * Application and notification settings
+ * Application and notification settings - Vietnamese UI
  *
- * Phase 1: Skeleton only - full implementation in Phase 5
+ * Phase 5: Full implementation with LLM settings UI
  */
 
 import { useSettingsStore } from '@stores/settingsStore';
+import { LLMSettings } from '@components/settings';
+import messages from '@localization';
 
 export default function Settings() {
   const { notifications } = useSettingsStore();
@@ -14,31 +16,31 @@ export default function Settings() {
     <div className="max-w-2xl mx-auto">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{messages.settings.title}</h1>
         <p className="text-gray-600 mt-1">
-          Configure your app preferences and notifications
+          {messages.settings.subtitle}
         </p>
       </div>
 
       {/* Notifications */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Notifications
+          {messages.settings.notifications}
         </h3>
 
         <div className="space-y-4">
           <SettingToggle
-            label="Morning Insight"
-            description="Receive a notification with your daily insight"
+            label={messages.settings.morningInsight.label}
+            description={messages.settings.morningInsight.description}
             enabled={notifications?.morning_insight_enabled ?? true}
             onChange={() => {}}
           />
 
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1">
-              <div className="font-medium text-gray-900">Morning Time</div>
+              <div className="font-medium text-gray-900">{messages.settings.morningTime.label}</div>
               <div className="text-sm text-gray-500">
-                When to receive your morning insight
+                {messages.settings.morningTime.description}
               </div>
             </div>
             <input
@@ -50,17 +52,17 @@ export default function Settings() {
           </div>
 
           <SettingToggle
-            label="Evening Journal Reminder"
-            description="Get reminded to write your journal entry"
+            label={messages.settings.eveningJournal.label}
+            description={messages.settings.eveningJournal.description}
             enabled={notifications?.evening_journal_enabled ?? true}
             onChange={() => {}}
           />
 
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1">
-              <div className="font-medium text-gray-900">Evening Time</div>
+              <div className="font-medium text-gray-900">{messages.settings.eveningTime.label}</div>
               <div className="text-sm text-gray-500">
-                When to receive your journal reminder
+                {messages.settings.eveningTime.description}
               </div>
             </div>
             <input
@@ -72,15 +74,15 @@ export default function Settings() {
           </div>
 
           <SettingToggle
-            label="Sound"
-            description="Play a sound with notifications"
+            label={messages.settings.sound.label}
+            description={messages.settings.sound.description}
             enabled={notifications?.sound_enabled ?? true}
             onChange={() => {}}
           />
 
           <SettingToggle
-            label="Quiet Hours"
-            description="Suppress notifications during specified hours"
+            label={messages.settings.quietHours.label}
+            description={messages.settings.quietHours.description}
             enabled={notifications?.quiet_hours_enabled ?? false}
             onChange={() => {}}
           />
@@ -90,88 +92,62 @@ export default function Settings() {
       {/* Application */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Application
+          {messages.settings.application}
         </h3>
 
         <div className="space-y-4">
           <SettingToggle
-            label="Launch on Startup"
-            description="Automatically start the app when you log in"
+            label={messages.settings.launchOnStartup.label}
+            description={messages.settings.launchOnStartup.description}
             enabled={notifications?.launch_on_startup ?? false}
             onChange={() => {}}
           />
         </div>
       </div>
 
-      {/* API Configuration */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          AI Configuration
-        </h3>
-
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 py-2">
-            <div className="flex-1">
-              <div className="font-medium text-gray-900">API Key</div>
-              <div className="text-sm text-gray-500">
-                Your LLM API key for generating insights
-              </div>
-            </div>
-            <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors">
-              Configure
-            </button>
-          </div>
-
-          <div className="flex items-center gap-4 py-2">
-            <div className="flex-1">
-              <div className="font-medium text-gray-900">Provider</div>
-              <div className="text-sm text-gray-500">
-                LLM provider for insight generation
-              </div>
-            </div>
-            <span className="text-gray-600">DeepSeek (Default)</span>
-          </div>
-        </div>
+      {/* AI / LLM Settings */}
+      <div className="mb-6">
+        <LLMSettings />
       </div>
 
       {/* Data */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Data & Privacy
+          {messages.settings.dataPrivacy}
         </h3>
 
         <div className="space-y-4">
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1">
-              <div className="font-medium text-gray-900">Storage Mode</div>
+              <div className="font-medium text-gray-900">{messages.settings.storageMode.label}</div>
               <div className="text-sm text-gray-500">
-                All data is stored locally on your device
+                {messages.settings.storageMode.description}
               </div>
             </div>
-            <span className="text-gray-600">Local Only</span>
+            <span className="text-gray-600">{messages.settings.storageMode.value}</span>
           </div>
 
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1">
-              <div className="font-medium text-gray-900">Export Data</div>
+              <div className="font-medium text-gray-900">{messages.settings.exportData.label}</div>
               <div className="text-sm text-gray-500">
-                Download all your data as JSON
+                {messages.settings.exportData.description}
               </div>
             </div>
             <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors">
-              Export
+              {messages.actions.export}
             </button>
           </div>
 
           <div className="flex items-center gap-4 py-2 border-t border-gray-100 pt-4">
             <div className="flex-1">
-              <div className="font-medium text-red-600">Delete All Data</div>
+              <div className="font-medium text-red-600">{messages.settings.deleteData.label}</div>
               <div className="text-sm text-gray-500">
-                Permanently delete all your data
+                {messages.settings.deleteData.description}
               </div>
             </div>
             <button className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition-colors">
-              Delete
+              {messages.actions.delete}
             </button>
           </div>
         </div>

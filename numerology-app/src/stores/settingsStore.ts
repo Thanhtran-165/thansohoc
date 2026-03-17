@@ -5,9 +5,32 @@
 
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { dbQuery } from '@services/database';
+import { getDatabase } from '@services/database';
 import { NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from '@/types';
 import { getCurrentTimestamp } from '@utils/date';
+
+// Helper to check if using localStorage mode
+function isLocalStorageMode(): boolean {
+  try {
+    const db = getDatabase();
+    return db?.type === 'localStorage';
+  } catch {
+    return true;
+  }
+}
+
+// LocalStorage key
+const NOTIFICATIONS_KEY = 'notification_preferences';
+
+// Helper functions for localStorage
+function getNotificationsFromStorage(): NotificationPreferences | null {
+  const data = localStorage.getItem(NOTIFICATIONS_KEY);
+  return data ? JSON.parse(data) : null;
+}
+
+function saveNotificationsToStorage(prefs: NotificationPreferences): void {
+  localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(prefs));
+}
 
 interface SettingsState {
   // State
@@ -30,16 +53,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   error: null,
 
   // Load settings from database
-  loadSettings: async (userId: string) => {
+  loadSettings: async (_userId: string) => {
     set({ isLoading: true, error: null });
 
     try {
-      const prefs = dbQuery.get<NotificationPreferences>(
-        'SELECT * FROM notification_preferences WHERE user_id = ?',
-        [userId]
-      );
+      let prefs: NotificationPreferences | null = null;
 
-      set({ notifications: prefs || null, isLoading: false });
+      if (isLocalStorageMode()) {
+        prefs = getNotificationsFromStorage();
+      }
+
+      set({ notifications: prefs, isLoading: false });
     } catch (error) {
       set({ error: 'Failed to load settings', isLoading: false });
       console.error('Failed to load settings:', error);
@@ -67,29 +91,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       updated_at: now,
     };
 
-    dbQuery.run(
-      `INSERT INTO notification_preferences (
-        id, user_id, morning_insight_enabled, morning_insight_time,
-        evening_journal_enabled, evening_journal_time, quiet_hours_enabled,
-        quiet_hours_start, quiet_hours_end, launch_on_startup, sound_enabled,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        prefs.id,
-        prefs.user_id,
-        prefs.morning_insight_enabled ? 1 : 0,
-        prefs.morning_insight_time,
-        prefs.evening_journal_enabled ? 1 : 0,
-        prefs.evening_journal_time,
-        prefs.quiet_hours_enabled ? 1 : 0,
-        prefs.quiet_hours_start,
-        prefs.quiet_hours_end,
-        prefs.launch_on_startup ? 1 : 0,
-        prefs.sound_enabled ? 1 : 0,
-        prefs.created_at,
-        prefs.updated_at,
-      ]
-    );
+    if (isLocalStorageMode()) {
+      saveNotificationsToStorage(prefs);
+    }
 
     set({ notifications: prefs });
     return prefs;
@@ -103,34 +107,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     const now = getCurrentTimestamp();
-    const updateFields: string[] = [];
-    const values: (string | number | null)[] = [];
+    const updatedPrefs = {
+      ...notifications,
+      ...updates,
+      updated_at: now,
+    };
 
-    // Build dynamic update query
-    Object.entries(updates).forEach(([key, value]) => {
-      updateFields.push(`${key} = ?`);
-      if (typeof value === 'boolean') {
-        values.push(value ? 1 : 0);
-      } else {
-        values.push(value as string | null);
-      }
-    });
+    if (isLocalStorageMode()) {
+      saveNotificationsToStorage(updatedPrefs);
+    }
 
-    updateFields.push('updated_at = ?');
-    values.push(now);
-    values.push(notifications.id);
-
-    dbQuery.run(
-      `UPDATE notification_preferences SET ${updateFields.join(', ')} WHERE id = ?`,
-      values
-    );
-
-    set({
-      notifications: {
-        ...notifications,
-        ...updates,
-        updated_at: now,
-      },
-    });
+    set({ notifications: updatedPrefs });
   },
 }));

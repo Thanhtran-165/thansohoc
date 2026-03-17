@@ -6,6 +6,7 @@
 import { useState, useMemo, Fragment } from 'react';
 import { ClaimBadge } from './ClaimBadge';
 import { Claim, ClaimType } from '@/types';
+import messages from '@localization';
 
 interface InsightLayerContentProps {
   content: string;
@@ -104,7 +105,7 @@ export function InsightLayerContent({
         <span className="ml-1">{segment.text}</span>
         {isExpanded && claimData && (
           <span className="ml-2 text-xs text-gray-500">
-            (confidence: {(claimData.confidence * 100).toFixed(1)}%)
+            ({messages.claimTypes.confidence}: {(claimData.confidence * 100).toFixed(1)}%)
           </span>
         )}
       </span>

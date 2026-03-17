@@ -1,8 +1,6 @@
 /**
  * Onboarding Screen
- * Multi-step onboarding flow for new users
- *
- * Phase 1: Skeleton only - full implementation in Phase 5
+ * Multi-step onboarding flow for new users - Vietnamese UI
  */
 
 import { useState } from 'react';
@@ -10,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '@stores/userStore';
 import { useSettingsStore } from '@stores/settingsStore';
 import { StylePreference, InsightLength, Language } from '@/types';
+import messages from '@localization';
 
 type OnboardingStep = 'welcome' | 'profile' | 'preferences' | 'complete';
 
@@ -21,6 +20,14 @@ interface FormData {
   language: Language;
 }
 
+const STEP_LABELS = [
+  messages.onboarding.steps.welcome,
+  messages.onboarding.steps.profile,
+  messages.onboarding.steps.preferences,
+  messages.onboarding.steps.complete,
+];
+const CURRENT_STEPS: OnboardingStep[] = ['welcome', 'profile', 'preferences', 'complete'];
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const { createProfile, completeOnboarding } = useUserStore();
@@ -28,13 +35,12 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form state
   const [formData, setFormData] = useState<FormData>({
     full_name: '',
     date_of_birth: '',
     style_preference: 'practical',
     insight_length: 'detailed',
-    language: 'en',
+    language: 'vi',
   });
 
   const handleNext = async () => {
@@ -45,15 +51,9 @@ export default function Onboarding() {
     } else if (currentStep === 'preferences') {
       setIsLoading(true);
       try {
-        // Create user profile
         const profile = await createProfile(formData);
-
-        // Create notification preferences
         await createNotificationPreferences(profile.id);
-
-        // Complete onboarding
         await completeOnboarding();
-
         setCurrentStep('complete');
       } catch (error) {
         console.error('Onboarding error:', error);
@@ -71,18 +71,18 @@ export default function Onboarding() {
         {/* Progress indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            {['Welcome', 'Profile', 'Preferences', 'Complete'].map((step, index) => (
+            {STEP_LABELS.map((step, index) => (
               <div
                 key={step}
                 className={`flex items-center ${
-                  index <= ['welcome', 'profile', 'preferences', 'complete'].indexOf(currentStep)
+                  index <= CURRENT_STEPS.indexOf(currentStep)
                     ? 'text-primary-600'
                     : 'text-gray-300'
                 }`}
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    index <= ['welcome', 'profile', 'preferences', 'complete'].indexOf(currentStep)
+                    index <= CURRENT_STEPS.indexOf(currentStep)
                       ? 'bg-primary-500 text-white'
                       : 'bg-gray-200 text-gray-500'
                   }`}
@@ -92,7 +92,7 @@ export default function Onboarding() {
                 {index < 3 && (
                   <div
                     className={`w-16 h-1 mx-2 ${
-                      index < ['welcome', 'profile', 'preferences', 'complete'].indexOf(currentStep)
+                      index < CURRENT_STEPS.indexOf(currentStep)
                         ? 'bg-primary-500'
                         : 'bg-gray-200'
                     }`}
@@ -135,7 +135,7 @@ export default function Onboarding() {
   );
 }
 
-// Step components (skeleton implementations)
+// Step components
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <div className="text-center">
@@ -143,17 +143,16 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         <span className="text-white font-bold text-2xl">N</span>
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-4">
-        Welcome to Numerology Intelligence
+        {messages.onboarding.welcome.title}
       </h2>
       <p className="text-gray-600 mb-8">
-        Discover daily insights based on your personal numerology.
-        Let's set up your profile to get started.
+        {messages.onboarding.welcome.description}
       </p>
       <button
         onClick={onNext}
         className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors"
       >
-        Get Started
+        {messages.onboarding.welcome.button}
       </button>
     </div>
   );
@@ -170,28 +169,30 @@ function ProfileStep({
 }) {
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Your Profile</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">
+        {messages.onboarding.profile.title}
+      </h2>
       <p className="text-gray-600 mb-6">
-        Enter your name and birth date for personalized numerology insights.
+        {messages.onboarding.profile.description}
       </p>
 
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Full Name
+            {messages.onboarding.profile.fullName}
           </label>
           <input
             type="text"
             value={formData.full_name}
             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="Enter your full name"
+            placeholder={messages.onboarding.profile.fullNamePlaceholder}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date of Birth
+            {messages.onboarding.profile.dateOfBirth}
           </label>
           <input
             type="date"
@@ -207,7 +208,7 @@ function ProfileStep({
         disabled={!formData.full_name || !formData.date_of_birth}
         className="w-full mt-6 py-3 px-4 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
       >
-        Continue
+        {messages.actions.continue}
       </button>
     </div>
   );
@@ -225,22 +226,24 @@ function PreferencesStep({
   isLoading: boolean;
 }) {
   const styles = [
-    { value: 'gentle' as const, label: 'Gentle', description: 'Soft and supportive language' },
-    { value: 'direct' as const, label: 'Direct', description: 'Clear and to the point' },
-    { value: 'practical' as const, label: 'Practical', description: 'Actionable and grounded' },
-    { value: 'spiritual' as const, label: 'Spiritual', description: 'Soulful and reflective' },
+    { value: 'gentle' as const, ...messages.onboarding.preferences.styles.gentle },
+    { value: 'direct' as const, ...messages.onboarding.preferences.styles.direct },
+    { value: 'practical' as const, ...messages.onboarding.preferences.styles.practical },
+    { value: 'spiritual' as const, ...messages.onboarding.preferences.styles.spiritual },
   ];
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Your Preferences</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">
+        {messages.onboarding.preferences.title}
+      </h2>
       <p className="text-gray-600 mb-6">
-        Choose how you'd like your insights to be delivered.
+        {messages.onboarding.preferences.description}
       </p>
 
       <div className="space-y-4 mb-6">
         <label className="block text-sm font-medium text-gray-700">
-          Insight Style
+          {messages.onboarding.preferences.insightStyle}
         </label>
         <div className="grid grid-cols-2 gap-3">
           {styles.map((style) => (
@@ -262,7 +265,7 @@ function PreferencesStep({
 
       <div className="space-y-4 mb-6">
         <label className="block text-sm font-medium text-gray-700">
-          Insight Length
+          {messages.onboarding.preferences.insightLength}
         </label>
         <div className="grid grid-cols-2 gap-3">
           <button
@@ -273,8 +276,12 @@ function PreferencesStep({
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <div className="font-medium text-gray-900">Brief</div>
-            <div className="text-xs text-gray-500">Quick daily read</div>
+            <div className="font-medium text-gray-900">
+              {messages.onboarding.preferences.lengths.brief.label}
+            </div>
+            <div className="text-xs text-gray-500">
+              {messages.onboarding.preferences.lengths.brief.description}
+            </div>
           </button>
           <button
             onClick={() => setFormData({ ...formData, insight_length: 'detailed' })}
@@ -284,8 +291,12 @@ function PreferencesStep({
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <div className="font-medium text-gray-900">Detailed</div>
-            <div className="text-xs text-gray-500">In-depth analysis</div>
+            <div className="font-medium text-gray-900">
+              {messages.onboarding.preferences.lengths.detailed.label}
+            </div>
+            <div className="text-xs text-gray-500">
+              {messages.onboarding.preferences.lengths.detailed.description}
+            </div>
           </button>
         </div>
       </div>
@@ -295,7 +306,9 @@ function PreferencesStep({
         disabled={isLoading}
         className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white font-medium rounded-lg transition-colors"
       >
-        {isLoading ? 'Setting up...' : 'Complete Setup'}
+        {isLoading
+          ? messages.onboarding.preferences.settingUp
+          : messages.onboarding.preferences.button}
       </button>
     </div>
   );
@@ -310,16 +323,16 @@ function CompleteStep({ onNext }: { onNext: () => void }) {
         </svg>
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-4">
-        You're All Set!
+        {messages.onboarding.complete.title}
       </h2>
       <p className="text-gray-600 mb-8">
-        Your profile has been created. Let's generate your first daily insight.
+        {messages.onboarding.complete.description}
       </p>
       <button
         onClick={onNext}
         className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors"
       >
-        Go to Dashboard
+        {messages.onboarding.complete.button}
       </button>
     </div>
   );

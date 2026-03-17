@@ -1,6 +1,6 @@
 /**
  * WhyThisInsightModal Component
- * Explains how a specific insight was generated
+ * Explains how a specific insight was generated - Vietnamese UI
  *
  * Phase 5: Real data from database via persistence layer
  */
@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import Modal from '@components/common/Modal';
 import { getWhyThisInsight } from '@services/insight/persistence';
 import { WhyThisInsight as ServiceWhyThisInsight } from '@services/insight/types';
+import messages from '@localization';
 
 interface WhyThisInsightModalProps {
   insightId: string;
@@ -33,13 +34,13 @@ export function WhyThisInsightModal({
         const whyThisData = await getWhyThisInsight(insightId);
 
         if (!whyThisData) {
-          setError('No explanation available for this insight.');
+          setError(messages.insight.noExplanation);
           setData(null);
         } else {
           setData(whyThisData);
         }
       } catch (err) {
-        setError('Failed to load explanation');
+        setError(messages.insight.failedToLoad);
         console.error('Failed to load WhyThisInsight:', err);
       } finally {
         setLoading(false);
@@ -51,7 +52,7 @@ export function WhyThisInsightModal({
 
   if (loading) {
     return (
-      <Modal isOpen={true} onClose={onClose} title="Why This Insight">
+      <Modal isOpen={true} onClose={onClose} title={messages.insight.whyThisTitle}>
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500" />
         </div>
@@ -61,7 +62,7 @@ export function WhyThisInsightModal({
 
   if (error) {
     return (
-      <Modal isOpen={true} onClose={onClose} title="Why This Insight">
+      <Modal isOpen={true} onClose={onClose} title={messages.insight.whyThisTitle}>
         <div className="text-center py-8 text-red-500">
           {error}
         </div>
@@ -72,13 +73,13 @@ export function WhyThisInsightModal({
   // Handle no data state (when insight exists but why_this doesn't)
   if (!data) {
     return (
-      <Modal isOpen={true} onClose={onClose} title="Why This Insight">
+      <Modal isOpen={true} onClose={onClose} title={messages.insight.whyThisTitle}>
         <div className="text-center py-8">
           <p className="text-gray-500">
-            Explanation data is not available for this insight.
+            {messages.insight.explanationNotAvailable}
           </p>
           <p className="text-sm text-gray-400 mt-2">
-            This may happen for fallback insights or insights generated before the explainability feature was added.
+            {messages.insight.explanationNotAvailableDetail}
           </p>
         </div>
       </Modal>
@@ -86,14 +87,14 @@ export function WhyThisInsightModal({
   }
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Why This Insight">
+    <Modal isOpen={true} onClose={onClose} title={messages.insight.whyThisTitle}>
       <div className="max-h-[70vh] overflow-y-auto">
         {/* Data Sources */}
         <section className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Data Sources</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.dataSources}</h4>
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Profile Completeness</span>
+              <span className="text-sm text-gray-600">{messages.insight.profileCompleteness}</span>
               <div className="flex items-center gap-2">
                 <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
@@ -107,14 +108,14 @@ export function WhyThisInsightModal({
               </div>
             </div>
             <div className="text-xs text-gray-500">
-              Available: {data.data_sources.data_available.join(', ')}
+              {messages.insight.available}: {data.data_sources.data_available.join(', ')}
             </div>
           </div>
         </section>
 
         {/* Calculated Claims */}
         <section className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Calculated Claims</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.calculatedClaims}</h4>
           <div className="space-y-3">
             {data.calculated_claims.map((claim, index) => (
               <div key={index} className="bg-blue-50 rounded-lg p-4">
@@ -126,7 +127,7 @@ export function WhyThisInsightModal({
                 </div>
                 {claim.inputs && Object.keys(claim.inputs).length > 0 && (
                   <div className="mt-2 text-xs text-gray-500">
-                    <span className="font-medium">Inputs:</span>{' '}
+                    <span className="font-medium">{messages.insight.inputs}:</span>{' '}
                     {Object.entries(claim.inputs).map(([k, v]) => `${k}=${v}`).join(', ')}
                   </div>
                 )}
@@ -137,35 +138,35 @@ export function WhyThisInsightModal({
 
         {/* Interpretation Basis */}
         <section className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Interpretation Basis</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.interpretationBasis}</h4>
           <div className="bg-purple-50 rounded-lg p-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">Style:</span>
+                <span className="text-gray-500">{messages.insight.style}:</span>
                 <span className="ml-2 font-medium text-purple-700 capitalize">
                   {data.interpretation_basis.style_preference}
                 </span>
               </div>
               <div>
-                <span className="text-gray-500">Context:</span>
+                <span className="text-gray-500">{messages.insight.context}:</span>
                 <span className="ml-2 text-purple-700 text-xs">
                   {data.interpretation_basis.numerology_context.join(', ')}
                 </span>
               </div>
             </div>
             <div className="mt-2 text-xs text-gray-500">
-              Model v{data.interpretation_basis.model_version} •
-              Prompt v{data.interpretation_basis.prompt_version}
+              {messages.insight.modelVersion}{data.interpretation_basis.model_version} •
+              {messages.insight.promptVersion}{data.interpretation_basis.prompt_version}
             </div>
           </div>
         </section>
 
         {/* Confidence Breakdown */}
         <section className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Confidence Breakdown</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.confidenceBreakdown}</h4>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Data Quality</span>
+              <span className="text-sm text-gray-600">{messages.insight.dataQuality}</span>
               <div className="flex items-center gap-2">
                 <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
@@ -179,7 +180,7 @@ export function WhyThisInsightModal({
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Interpretation Confidence</span>
+              <span className="text-sm text-gray-600">{messages.insight.interpretationConfidence}</span>
               <div className="flex items-center gap-2">
                 <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
@@ -193,7 +194,7 @@ export function WhyThisInsightModal({
               </div>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-              <span className="text-sm font-medium text-gray-700">Overall</span>
+              <span className="text-sm font-medium text-gray-700">{messages.insight.overall}</span>
               <span className="text-lg font-bold text-primary-600">
                 {(data.confidence_breakdown.overall * 100).toFixed(0)}%
               </span>
@@ -204,7 +205,7 @@ export function WhyThisInsightModal({
         {/* Explanation */}
         {data.explanation && (
           <section>
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Summary</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.summary}</h4>
             <p className="text-sm text-gray-600 leading-relaxed">
               {data.explanation}
             </p>

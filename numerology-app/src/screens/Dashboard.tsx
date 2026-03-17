@@ -1,6 +1,6 @@
 /**
  * Dashboard Screen
- * Main dashboard combining insight display and journal entry
+ * Main dashboard combining insight display and journal entry - Vietnamese UI
  *
  * Phase 4: Full implementation with real components
  */
@@ -12,6 +12,7 @@ import { useJournalStore } from '@stores/journalStore';
 import { InsightCard } from '@components/insight';
 import { JournalForm } from '@components/journal';
 import { DailyInsight } from '@/types';
+import messages from '@localization';
 
 export default function Dashboard() {
   const { profile } = useUserStore();
@@ -32,10 +33,10 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          Good {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'there'}
+          {getVietnameseGreeting()}, {profile?.full_name?.split(' ')[0] || ''}
         </h1>
         <p className="text-gray-600 mt-1">
-          Here's your numerology insight for today
+          {messages.dashboard.insightSubtitle}
         </p>
       </div>
 
@@ -45,7 +46,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Today's Insight
+              {messages.dashboard.todaysInsight}
             </h2>
 
             {insightLoading ? (
@@ -66,7 +67,7 @@ export default function Dashboard() {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Quick Journal
+              {messages.dashboard.quickJournal}
             </h2>
 
             {journalLoading ? (
@@ -96,7 +97,7 @@ export default function Dashboard() {
       <div className="mt-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Your Numbers
+            {messages.dashboard.yourNumbers}
           </h2>
           <NumerologySummary insight={todayInsight} />
         </div>
@@ -105,12 +106,12 @@ export default function Dashboard() {
   );
 }
 
-// Helper function for greeting
-function getGreeting(): string {
+// Helper function for Vietnamese greeting
+function getVietnameseGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
+  if (hour < 12) return messages.greeting.morning;
+  if (hour < 17) return messages.greeting.afternoon;
+  return messages.greeting.evening;
 }
 
 // Skeleton components
@@ -143,9 +144,9 @@ function EmptyInsightState() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       </div>
-      <h3 className="text-gray-900 font-medium mb-2">No insight yet</h3>
+      <h3 className="text-gray-900 font-medium mb-2">{messages.dashboard.noInsight.title}</h3>
       <p className="text-gray-500 text-sm">
-        Your daily insight will appear here once generated.
+        {messages.dashboard.noInsight.description}
       </p>
     </div>
   );
@@ -157,7 +158,7 @@ function JournalCard({ entry, onEdit }: { entry: any; onEdit: () => void }) {
     <div>
       <div className="flex gap-4 mb-4">
         <div className="flex-1">
-          <div className="text-sm text-gray-500 mb-1">Mood</div>
+          <div className="text-sm text-gray-500 mb-1">{messages.dashboard.journal.mood}</div>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
               <div
@@ -171,7 +172,7 @@ function JournalCard({ entry, onEdit }: { entry: any; onEdit: () => void }) {
           </div>
         </div>
         <div className="flex-1">
-          <div className="text-sm text-gray-500 mb-1">Energy</div>
+          <div className="text-sm text-gray-500 mb-1">{messages.dashboard.journal.energy}</div>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
               <div
@@ -206,7 +207,7 @@ function JournalCard({ entry, onEdit }: { entry: any; onEdit: () => void }) {
         onClick={onEdit}
         className="text-primary-600 hover:text-primary-700 text-sm font-medium"
       >
-        Edit entry
+        {messages.dashboard.journal.editEntry}
       </button>
     </div>
   );
@@ -216,9 +217,9 @@ function JournalCard({ entry, onEdit }: { entry: any; onEdit: () => void }) {
 function NumerologySummary({ insight }: { insight: DailyInsight | null }) {
   // Get cyclic numbers from insight or show placeholders
   const numbers = [
-    { label: 'Personal Day', value: insight?.personal_day ?? '?' },
-    { label: 'Personal Month', value: insight?.personal_month ?? '?' },
-    { label: 'Personal Year', value: insight?.personal_year ?? '?' },
+    { label: messages.dashboard.numerology.personalDay, value: insight?.personal_day ?? '?' },
+    { label: messages.dashboard.numerology.personalMonth, value: insight?.personal_month ?? '?' },
+    { label: messages.dashboard.numerology.personalYear, value: insight?.personal_year ?? '?' },
   ];
 
   return (
