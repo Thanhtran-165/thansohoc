@@ -9,6 +9,7 @@ import { useUserStore } from '@stores/userStore';
 import { useSettingsStore } from '@stores/settingsStore';
 import { StylePreference, InsightLength, Language } from '@/types';
 import messages from '@localization';
+import { trackEvent } from '@services/analytics';
 
 type OnboardingStep = 'welcome' | 'profile' | 'preferences' | 'complete';
 
@@ -54,6 +55,13 @@ export default function Onboarding() {
         const profile = await createProfile(formData);
         await createNotificationPreferences(profile.id);
         await completeOnboarding();
+        await trackEvent('onboarding_completed', {
+          userId: profile.id,
+          payload: {
+            style_preference: formData.style_preference,
+            insight_length: formData.insight_length,
+          },
+        });
         setCurrentStep('complete');
       } catch (error) {
         console.error('Onboarding error:', error);

@@ -5,7 +5,14 @@
  */
 
 import { logger } from '../../utils/logger';
-import { getDatabase } from '../database';
+import {
+  deleteLocalTableRows,
+  findLocalTableRow,
+  getDatabase,
+  getLocalTableRows,
+  isLocalStorageDatabase,
+  upsertLocalTableRow,
+} from '../database';
 import { InsightResponse, WhyThisInsight, FallbackReason, SCHEMA_VERSION } from './types';
 
 /**
@@ -16,9 +23,38 @@ export async function storeDailyInsight(
   insight: InsightResponse
 ): Promise<void> {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
     const id = crypto.randomUUID();
     const date = insight.generated_at.split('T')[0]; // Extract date from timestamp
+
+    if (isLocalStorageDatabase(database)) {
+      const existing = findLocalTableRow<Record<string, unknown>>(
+        'daily_insights',
+        (row) => row.user_id === userId && row.date === date
+      );
+
+      upsertLocalTableRow('daily_insights', {
+        id: String(existing?.id ?? id),
+        user_id: userId,
+        date,
+        request_id: insight.request_id,
+        headline: insight.insight.headline,
+        theme: insight.insight.theme,
+        personal_day: insight.insight.personal_day || 0,
+        personal_month: insight.insight.personal_month || 0,
+        personal_year: insight.insight.personal_year || 0,
+        layers: JSON.stringify(insight.insight.layers),
+        confidence: JSON.stringify(insight.insight.confidence),
+        metadata: JSON.stringify(insight.metadata),
+        is_fallback: insight.is_fallback ? 1 : 0,
+        fallback_reason: insight.fallback_reason || null,
+        generated_at: insight.generated_at,
+        viewed_at: existing?.viewed_at ?? null,
+      });
+      return;
+    }
+
+    const db = database;
 
     // Check if insight already exists for this date
     const existing = db
@@ -30,7 +66,7 @@ export async function storeDailyInsight(
       db.prepare(
         `UPDATE daily_insights
          SET request_id = ?, headline = ?, theme = ?, layers = ?, confidence = ?,
-             metadata = ?, is_fallback = ?, fallback_reason = ?, generated_at = ?, updated_at = ?
+             metadata = ?, is_fallback = ?, fallback_reason = ?, generated_at = ?
          WHERE user_id = ? AND date = ?`
       ).run(
         insight.request_id,
@@ -42,7 +78,6 @@ export async function storeDailyInsight(
         insight.is_fallback ? 1 : 0,
         insight.fallback_reason || null,
         insight.generated_at,
-        new Date().toISOString(),
         userId,
         date
       );
@@ -100,7 +135,52 @@ export async function getDailyInsight(
   date: string
 ): Promise<InsightResponse | null> {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
+
+    if (isLocalStorageDatabase(database)) {
+      const row = getLocalTableRows<Record<string, unknown>>('daily_insights')
+        .filter((item) => item.user_id === userId && item.date === date)
+        .sort((a, b) => String(b.generated_at ?? '').localeCompare(String(a.generated_at ?? '')))[0];
+
+      if (!row) {
+        return null;
+      }
+
+      const metadata = typeof row.metadata === 'string'
+        ? JSON.parse(row.metadata)
+        : row.metadata;
+
+      const insight: InsightResponse = {
+        schema_version: SCHEMA_VERSION,
+        request_id: row.request_id as string,
+        generated_at: row.generated_at as string,
+        model: (metadata as { model?: string })?.model || 'unknown',
+        insight: {
+          headline: row.headline as string,
+          theme: row.theme as string,
+          layers: JSON.parse(row.layers as string),
+          confidence: JSON.parse(row.confidence as string),
+          personal_day: row.personal_day as number,
+          personal_month: row.personal_month as number,
+          personal_year: row.personal_year as number,
+        },
+        metadata: metadata as InsightResponse['metadata'],
+        is_fallback: row.is_fallback === 1,
+        fallback_reason: row.fallback_reason as FallbackReason | undefined,
+      };
+
+      if (!row.viewed_at) {
+        upsertLocalTableRow('daily_insights', {
+          ...(row as Record<string, unknown>),
+          id: String(row.id),
+          viewed_at: new Date().toISOString(),
+        } as { id: string });
+      }
+
+      return insight;
+    }
+
+    const db = database;
 
     const row = db
       .prepare(
@@ -115,12 +195,14 @@ export async function getDailyInsight(
       return null;
     }
 
+    const metadata = JSON.parse(row.metadata as string);
+
     // Reconstruct insight response
     const insight: InsightResponse = {
       schema_version: SCHEMA_VERSION,
       request_id: row.request_id as string,
       generated_at: row.generated_at as string,
-      model: (row.metadata as Record<string, unknown>)?.model as string || 'unknown',
+      model: (metadata as { model?: string })?.model || 'unknown',
       insight: {
         headline: row.headline as string,
         theme: row.theme as string,
@@ -130,7 +212,7 @@ export async function getDailyInsight(
         personal_month: row.personal_month as number,
         personal_year: row.personal_year as number,
       },
-      metadata: JSON.parse(row.metadata as string),
+      metadata: metadata as InsightResponse['metadata'],
       is_fallback: row.is_fallback === 1,
       fallback_reason: row.fallback_reason as FallbackReason | undefined,
     };
@@ -163,8 +245,30 @@ export async function storeWhyThisInsight(
   whyThis: WhyThisInsight
 ): Promise<void> {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
     const id = crypto.randomUUID();
+
+    if (isLocalStorageDatabase(database)) {
+      const existing = findLocalTableRow<Record<string, unknown>>(
+        'why_this_insights',
+        (row) => row.insight_id === insightId
+      );
+
+      upsertLocalTableRow('why_this_insights', {
+        id: String(existing?.id ?? id),
+        insight_id: insightId,
+        request_id: whyThis.request_id,
+        data_sources: JSON.stringify(whyThis.data_sources),
+        calculated_claims: JSON.stringify(whyThis.calculated_claims),
+        interpretation_basis: JSON.stringify(whyThis.interpretation_basis),
+        confidence_breakdown: JSON.stringify(whyThis.confidence_breakdown),
+        explanation: whyThis.explanation,
+        generated_at: whyThis.generated_at,
+      });
+      return;
+    }
+
+    const db = database;
 
     db.prepare(
       `INSERT INTO why_this_insights
@@ -204,7 +308,32 @@ export async function getWhyThisInsight(
   insightId: string
 ): Promise<WhyThisInsight | null> {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
+
+    if (isLocalStorageDatabase(database)) {
+      const row = findLocalTableRow<Record<string, unknown>>(
+        'why_this_insights',
+        (item) => item.insight_id === insightId
+      );
+
+      if (!row) {
+        return null;
+      }
+
+      return {
+        id: row.id as string,
+        insight_id: row.insight_id as string,
+        request_id: row.request_id as string,
+        data_sources: JSON.parse(row.data_sources as string),
+        calculated_claims: JSON.parse(row.calculated_claims as string),
+        interpretation_basis: JSON.parse(row.interpretation_basis as string),
+        confidence_breakdown: JSON.parse(row.confidence_breakdown as string),
+        explanation: (row.explanation as string) || '',
+        generated_at: row.generated_at as string,
+      };
+    }
+
+    const db = database;
 
     const row = db
       .prepare('SELECT * FROM why_this_insights WHERE insight_id = ?')
@@ -247,17 +376,36 @@ export async function storeInsightFeedback(
     was_relevant?: boolean | null;
     was_helpful?: boolean | null;
     most_useful_claim_type?: 'calculated' | 'interpreted' | 'exploratory' | null;
+    tags?: string[] | null;
     feedback_text?: string | null;
   } = {}
 ): Promise<void> {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
     const id = crypto.randomUUID();
+
+    if (isLocalStorageDatabase(database)) {
+      upsertLocalTableRow('insight_feedback', {
+        id,
+        insight_id: insightId,
+        user_id: userId,
+        rating,
+        was_relevant: options.was_relevant === true ? 1 : options.was_relevant === false ? 0 : null,
+        was_helpful: options.was_helpful === true ? 1 : options.was_helpful === false ? 0 : null,
+        most_useful_claim_type: options.most_useful_claim_type || null,
+        tags: options.tags ? JSON.stringify(options.tags) : null,
+        feedback_text: options.feedback_text || null,
+        created_at: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const db = database;
 
     db.prepare(
       `INSERT INTO insight_feedback
-       (id, insight_id, user_id, rating, was_relevant, was_helpful, most_useful_claim_type, feedback_text, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       (id, insight_id, user_id, rating, was_relevant, was_helpful, most_useful_claim_type, tags, feedback_text, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       id,
       insightId,
@@ -266,6 +414,7 @@ export async function storeInsightFeedback(
       options.was_relevant === true ? 1 : options.was_relevant === false ? 0 : null,
       options.was_helpful === true ? 1 : options.was_helpful === false ? 0 : null,
       options.most_useful_claim_type || null,
+      options.tags ? JSON.stringify(options.tags) : null,
       options.feedback_text || null,
       new Date().toISOString()
     );
@@ -290,7 +439,19 @@ export async function storeInsightFeedback(
  */
 export function cleanupOldInsights(): number {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
+
+    if (isLocalStorageDatabase(database)) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 90);
+      const cutoffIso = cutoff.toISOString();
+      return deleteLocalTableRows<Record<string, unknown>>(
+        'daily_insights',
+        (row) => String(row.generated_at ?? '') < cutoffIso
+      );
+    }
+
+    const db = database;
 
     // Delete old insights
     const result = db

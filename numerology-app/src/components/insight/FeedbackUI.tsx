@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { ClaimType } from '@/types';
 import messages from '@localization';
+import { useInsightStore } from '@stores/insightStore';
 
 interface FeedbackUIProps {
   insightId: string;
@@ -62,13 +63,12 @@ export function FeedbackUI({
     setIsSubmitting(true);
 
     try {
-      // Submit feedback via store
-      const { useInsightStore } = await import('@stores/insightStore');
       await useInsightStore.getState().submitFeedback({
         insight_id: insightId,
         user_id: userId,
         rating: ratingValue,
         most_useful_claim_type: mostUsefulClaim || undefined,
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
         feedback_text: feedbackText || undefined,
       });
 
@@ -151,7 +151,7 @@ export function FeedbackUI({
           {/* Tags */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              {messages.feedback.tags}
+              {messages.feedback.tagLabels}
             </label>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Feedback tags">
               {getFeedbackTags().map((tag) => (

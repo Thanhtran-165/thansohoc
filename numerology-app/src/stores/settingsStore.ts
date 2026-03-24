@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '@services/database';
 import { NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from '@/types';
 import { getCurrentTimestamp } from '@utils/date';
+import { trackEvent } from '@services/analytics';
 
 // Helper to check if using localStorage mode
 function isLocalStorageMode(): boolean {
@@ -118,5 +119,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     set({ notifications: updatedPrefs });
+    await trackEvent('settings_updated', {
+      userId: updatedPrefs.user_id,
+      screen: '/settings',
+      payload: { updated_keys: Object.keys(updates) },
+    });
   },
 }));

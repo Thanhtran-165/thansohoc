@@ -19,7 +19,17 @@ function isLocalStorageMode(): boolean {
     const db = getDatabase();
     return db?.type === 'localStorage';
   } catch {
+    // Database not initialized yet - default to localStorage mode
     return true;
+  }
+}
+
+// Helper to get profile (handles both initialized and uninitialized database)
+function safeGetProfile(): UserProfile | null {
+  try {
+    return getProfileFromStorage();
+  } catch {
+    return null;
   }
 }
 
@@ -66,7 +76,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       let profile: UserProfile | null = null;
 
       if (isLocalStorageMode()) {
-        profile = getProfileFromStorage();
+        profile = safeGetProfile();
       } else {
         // SQLite mode - would need proper implementation
         profile = null;

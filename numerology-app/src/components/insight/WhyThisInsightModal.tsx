@@ -34,7 +34,7 @@ export function WhyThisInsightModal({
         const whyThisData = await getWhyThisInsight(insightId);
 
         if (!whyThisData) {
-          setError(messages.insight.noExplanation);
+          setError(null);
           setData(null);
         } else {
           setData(whyThisData);

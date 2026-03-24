@@ -23,6 +23,303 @@ let Database: any = null;
 let pathJoin: any = null;
 let pathDirname: any = null;
 let fsMkdirSync: any = null;
+const LOCAL_TABLE_PREFIX = 'db_table_';
+const runtimeImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+
+function getLocalTableKey(table: string): string {
+  return `${LOCAL_TABLE_PREFIX}${table}`;
+}
+
+function readLocalTable<T>(table: string): T[] {
+  const raw = localStorage.getItem(getLocalTableKey(table));
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalTable<T>(table: string, rows: T[]): void {
+  localStorage.setItem(getLocalTableKey(table), JSON.stringify(rows));
+}
+
+function cloneRow<T>(row: T): T {
+  return JSON.parse(JSON.stringify(row)) as T;
+}
+
+function normalizeSql(sql: string): string {
+  return sql.replace(/\s+/g, ' ').trim();
+}
+
+function getTableName(sql: string, keyword: 'FROM' | 'INTO' | 'UPDATE'): string | null {
+  const match = normalizeSql(sql).match(new RegExp(`${keyword} ([a-z_]+)`, 'i'));
+  return match ? match[1] : null;
+}
+
+type LocalCondition = {
+  column: string;
+  operator: '=' | 'LIKE' | '<';
+};
+
+function parseWhereConditions(sql: string): LocalCondition[] {
+  const normalized = normalizeSql(sql);
+  const whereMatch = normalized.match(/ WHERE (.+?)( ORDER BY | LIMIT |$)/i);
+  if (!whereMatch) return [];
+
+  return whereMatch[1]
+    .split(/\s+AND\s+/i)
+    .map((part) => part.trim())
+    .map((part) => {
+      const match = part.match(/^([a-z_]+)\s*(=|LIKE|<)\s*\?$/i);
+      if (!match) {
+        return null;
+      }
+
+      return {
+        column: match[1],
+        operator: match[2].toUpperCase() as LocalCondition['operator'],
+      };
+    })
+    .filter((condition): condition is LocalCondition => condition !== null);
+}
+
+function rowMatchesConditions(
+  row: Record<string, unknown>,
+  conditions: LocalCondition[],
+  params: unknown[]
+): boolean {
+  return conditions.every((condition, index) => {
+    const rowValue = row[condition.column];
+    const paramValue = params[index];
+
+    if (condition.operator === '=') {
+      return rowValue === paramValue;
+    }
+
+    if (condition.operator === '<') {
+      return String(rowValue) < String(paramValue);
+    }
+
+    const pattern = String(paramValue);
+    if (pattern.endsWith('%')) {
+      return String(rowValue).startsWith(pattern.slice(0, -1));
+    }
+
+    return String(rowValue) === pattern;
+  });
+}
+
+function applyOrderAndLimit<T extends Record<string, unknown>>(sql: string, rows: T[]): T[] {
+  const normalized = normalizeSql(sql);
+  const orderMatch = normalized.match(/ ORDER BY ([a-z_]+) (ASC|DESC)/i);
+  let result = [...rows];
+
+  if (orderMatch) {
+    const [, column, direction] = orderMatch;
+    result.sort((a, b) => {
+      const aValue = String(a[column] ?? '');
+      const bValue = String(b[column] ?? '');
+      return direction.toUpperCase() === 'DESC'
+        ? bValue.localeCompare(aValue)
+        : aValue.localeCompare(bValue);
+    });
+  }
+
+  const limitMatch = normalized.match(/ LIMIT (\d+)/i);
+  if (limitMatch) {
+    result = result.slice(0, Number(limitMatch[1]));
+  }
+
+  return result;
+}
+
+function selectLocalRows<T extends Record<string, unknown>>(sql: string, params: unknown[] = []): T[] {
+  const table = getTableName(sql, 'FROM');
+  if (!table) return [];
+
+  const rows = readLocalTable<T>(table);
+  const filtered = rows.filter((row) => rowMatchesConditions(row, parseWhereConditions(sql), params));
+  return applyOrderAndLimit(sql, filtered).map((row) => cloneRow(row));
+}
+
+function insertLocalRow(sql: string, params: unknown[]): any {
+  const table = getTableName(sql, 'INTO');
+  if (!table) return { changes: 0 };
+
+  const normalized = normalizeSql(sql);
+  const columnsMatch = normalized.match(/^[A-Z\s]*INSERT(?: OR REPLACE)? INTO [a-z_]+ \((.+?)\) VALUES/i);
+  if (!columnsMatch) return { changes: 0 };
+
+  const columns = columnsMatch[1].split(',').map((column) => column.trim());
+  const row = Object.fromEntries(columns.map((column, index) => [column, params[index]]));
+
+  const rows = readLocalTable<Record<string, unknown>>(table);
+  const rowId = row.id;
+  const existingIndex = rowId !== undefined
+    ? rows.findIndex((existing) => existing.id === rowId)
+    : -1;
+
+  if (existingIndex >= 0) {
+    rows[existingIndex] = row;
+  } else {
+    rows.push(row);
+  }
+
+  writeLocalTable(table, rows);
+  return { changes: 1 };
+}
+
+function updateLocalRows(sql: string, params: unknown[]): any {
+  const table = getTableName(sql, 'UPDATE');
+  if (!table) return { changes: 0 };
+
+  const normalized = normalizeSql(sql);
+  const setMatch = normalized.match(/ SET (.+?) WHERE /i);
+  if (!setMatch) return { changes: 0 };
+
+  const assignments = setMatch[1]
+    .split(',')
+    .map((assignment) => assignment.trim())
+    .map((assignment) => {
+      const match = assignment.match(/^([a-z_]+)\s*=\s*\?$/i);
+      return match ? match[1] : null;
+    })
+    .filter((column): column is string => column !== null);
+
+  const whereConditions = parseWhereConditions(sql);
+  const valueParams = params.slice(0, assignments.length);
+  const whereParams = params.slice(assignments.length);
+
+  const rows = readLocalTable<Record<string, unknown>>(table);
+  let changes = 0;
+
+  const updatedRows = rows.map((row) => {
+    if (!rowMatchesConditions(row, whereConditions, whereParams)) {
+      return row;
+    }
+
+    changes += 1;
+    const updatedRow = { ...row };
+    assignments.forEach((column, index) => {
+      updatedRow[column] = valueParams[index];
+    });
+    return updatedRow;
+  });
+
+  writeLocalTable(table, updatedRows);
+  return { changes };
+}
+
+function deleteLocalQueryRows(sql: string, params: unknown[]): any {
+  const table = getTableName(sql, 'FROM');
+  if (!table) return { changes: 0 };
+
+  const rows = readLocalTable<Record<string, unknown>>(table);
+  const conditions = parseWhereConditions(sql);
+  const remainingRows = rows.filter((row) => !rowMatchesConditions(row, conditions, params));
+  const changes = rows.length - remainingRows.length;
+  writeLocalTable(table, remainingRows);
+  return { changes };
+}
+
+export function isLocalStorageDatabase(database: any = db): boolean {
+  return database?.type === 'localStorage';
+}
+
+export function getLocalTableRows<T>(table: string): T[] {
+  return readLocalTable<T>(table).map((row) => cloneRow(row));
+}
+
+export function findLocalTableRow<T>(
+  table: string,
+  predicate: (row: T) => boolean
+): T | undefined {
+  return getLocalTableRows<T>(table).find(predicate);
+}
+
+export function upsertLocalTableRow<T extends { id: string }>(table: string, row: T): void {
+  const rows = readLocalTable<T>(table);
+  const existingIndex = rows.findIndex((existing) => existing.id === row.id);
+
+  if (existingIndex >= 0) {
+    rows[existingIndex] = row;
+  } else {
+    rows.push(row);
+  }
+
+  writeLocalTable(table, rows);
+}
+
+export function replaceLocalTableRows<T>(table: string, rows: T[]): void {
+  writeLocalTable(table, rows);
+}
+
+export function deleteLocalTableRows<T>(
+  table: string,
+  predicate: (row: T) => boolean
+): number {
+  const rows = readLocalTable<T>(table);
+  const remainingRows = rows.filter((row) => !predicate(row));
+  const changes = rows.length - remainingRows.length;
+  writeLocalTable(table, remainingRows);
+  return changes;
+}
+
+export function getLocalAppDataSnapshot(): Record<string, unknown> {
+  const snapshot: Record<string, unknown> = {};
+  const knownKeys = new Set([
+    'user_profile',
+    'notification_preferences',
+    'db_initialized',
+    'app-schema-version',
+    'app-fallback-mode',
+    'app-onboarding-step',
+  ]);
+
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key) continue;
+
+    if (knownKeys.has(key) || key.startsWith(LOCAL_TABLE_PREFIX)) {
+      const rawValue = localStorage.getItem(key);
+      if (!rawValue) continue;
+
+      try {
+        snapshot[key] = JSON.parse(rawValue);
+      } catch {
+        snapshot[key] = rawValue;
+      }
+    }
+  }
+
+  return snapshot;
+}
+
+export function clearLocalAppData(): void {
+  const keysToRemove: string[] = [];
+  const knownKeys = new Set([
+    'user_profile',
+    'notification_preferences',
+    'db_initialized',
+    'app-schema-version',
+    'app-fallback-mode',
+    'app-onboarding-step',
+  ]);
+
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key) continue;
+
+    if (knownKeys.has(key) || key.startsWith(LOCAL_TABLE_PREFIX)) {
+      keysToRemove.push(key);
+    }
+  }
+
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
+}
 
 /**
  * Initialize Node.js modules (only in Node.js environment)
@@ -31,12 +328,12 @@ async function loadNodeModules(): Promise<boolean> {
   if (!canUseSQLite) return false;
 
   try {
-    const betterSqlite3 = await import('better-sqlite3');
+    const betterSqlite3 = await runtimeImport('better-sqlite3');
     Database = betterSqlite3.default;
-    const path = await import('path');
+    const path = await runtimeImport('path');
     pathJoin = path.join;
     pathDirname = path.dirname;
-    const fs = await import('fs');
+    const fs = await runtimeImport('fs');
     fsMkdirSync = fs.mkdirSync;
     return true;
   } catch (error) {
@@ -153,6 +450,24 @@ async function runMigrationsLocalStorage(): Promise<void> {
     localStorage.setItem('db_initialized', 'true');
     logger.info('localStorage migrations completed');
   }
+
+  const tables = [
+    'analytics_events',
+    'app_settings',
+    'daily_insights',
+    'fallback_cache',
+    'insight_feedback',
+    'journal_entries',
+    'numerology_profiles',
+    'why_this_insights',
+  ];
+
+  for (const table of tables) {
+    const key = getLocalTableKey(table);
+    if (!localStorage.getItem(key)) {
+      localStorage.setItem(key, '[]');
+    }
+  }
 }
 
 /**
@@ -182,8 +497,42 @@ async function runMigrations(database: any): Promise<void> {
     runMigration001(database);
   }
 
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      name TEXT NOT NULL,
+      screen TEXT,
+      payload TEXT,
+      occurred_on TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `);
+
+  ensureColumnExists(database, 'why_this_insights', 'explanation', 'TEXT');
+  ensureColumnExists(database, 'insight_feedback', 'tags', 'TEXT');
+
   // Future migrations would go here:
   // if (compareVersions(currentVersion, '1.0.0') < 0) { ... }
+}
+
+function ensureColumnExists(
+  database: any,
+  table: string,
+  column: string,
+  definition: string
+): void {
+  try {
+    const columns = database.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+    const hasColumn = columns.some((existing) => existing.name === column);
+
+    if (!hasColumn) {
+      database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+      logger.info(`Added missing column ${column} to ${table}`);
+    }
+  } catch (error) {
+    logger.warn(`Failed to verify column ${column} on ${table}`);
+  }
 }
 
 /**
@@ -261,6 +610,7 @@ function runMigration001(database: any): void {
         calculated_claims TEXT NOT NULL,
         interpretation_basis TEXT NOT NULL,
         confidence_breakdown TEXT NOT NULL,
+        explanation TEXT,
         generated_at TEXT NOT NULL,
         FOREIGN KEY (insight_id) REFERENCES daily_insights(id) ON DELETE CASCADE
       )
@@ -294,6 +644,7 @@ function runMigration001(database: any): void {
         was_relevant INTEGER,
         was_helpful INTEGER,
         most_useful_claim_type TEXT,
+        tags TEXT,
         feedback_text TEXT,
         created_at TEXT NOT NULL,
         FOREIGN KEY (insight_id) REFERENCES daily_insights(id) ON DELETE CASCADE,
@@ -318,6 +669,19 @@ function runMigration001(database: any): void {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES user_profiles(id) ON DELETE CASCADE
+      )
+    `);
+
+    // AnalyticsEvents
+    database.exec(`
+      CREATE TABLE IF NOT EXISTS analytics_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        name TEXT NOT NULL,
+        screen TEXT,
+        payload TEXT,
+        occurred_on TEXT NOT NULL,
+        created_at TEXT NOT NULL
       )
     `);
 
@@ -381,11 +745,8 @@ export const dbQuery = {
    */
   get<T>(sql: string, params: unknown[] = []): T | undefined {
     const database = getDatabase();
-    if (database.type === 'localStorage') {
-      // localStorage mode - simple key-value lookup
-      const key = params[0] as string;
-      const value = localStorage.getItem(key);
-      return value ? JSON.parse(value) : undefined;
+    if (isLocalStorageDatabase(database)) {
+      return selectLocalRows<T & Record<string, unknown>>(sql, params)[0];
     }
     const stmt = database.prepare(sql);
     return stmt.get(...params) as T | undefined;
@@ -396,9 +757,8 @@ export const dbQuery = {
    */
   all<T>(_sql: string, _params: unknown[] = []): T[] {
     const database = getDatabase();
-    if (database.type === 'localStorage') {
-      // localStorage mode - return empty array for now
-      return [] as T[];
+    if (isLocalStorageDatabase(database)) {
+      return selectLocalRows<T & Record<string, unknown>>(_sql, _params);
     }
     const stmt = database.prepare(_sql);
     return stmt.all(..._params) as T[];
@@ -409,14 +769,22 @@ export const dbQuery = {
    */
   run(_sql: string, params: unknown[] = []): any {
     const database = getDatabase();
-    if (database.type === 'localStorage') {
-      // localStorage mode - store as key-value
-      const key = params[0] as string;
-      const value = params[1];
-      if (key && value !== undefined) {
-        localStorage.setItem(key, JSON.stringify(value));
+    if (isLocalStorageDatabase(database)) {
+      const normalized = normalizeSql(_sql).toUpperCase();
+
+      if (normalized.startsWith('INSERT')) {
+        return insertLocalRow(_sql, params);
       }
-      return { changes: 1 };
+
+      if (normalized.startsWith('UPDATE')) {
+        return updateLocalRows(_sql, params);
+      }
+
+      if (normalized.startsWith('DELETE')) {
+        return deleteLocalQueryRows(_sql, params);
+      }
+
+      return { changes: 0 };
     }
     const stmt = database.prepare(_sql);
     return stmt.run(...params);
@@ -439,18 +807,8 @@ export const dbQuery = {
    */
   batch(_sql: string, paramsArray: unknown[][]): any[] {
     const database = getDatabase();
-    if (database.type === 'localStorage') {
-      // localStorage mode - store each as key-value
-      const results: any[] = [];
-      for (const params of paramsArray) {
-        const key = params[0] as string;
-        const value = params[1];
-        if (key && value !== undefined) {
-          localStorage.setItem(key, JSON.stringify(value));
-        }
-        results.push({ changes: 1 });
-      }
-      return results;
+    if (isLocalStorageDatabase(database)) {
+      return paramsArray.map((params) => dbQuery.run(_sql, params));
     }
     const stmt = database.prepare(_sql);
     const results: any[] = [];

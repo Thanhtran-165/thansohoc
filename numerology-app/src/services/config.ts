@@ -3,7 +3,7 @@
  * Manages application configuration and settings
  */
 
-import { getDatabase, dbQuery } from './database';
+import { initDatabase, dbQuery } from './database';
 import { logger } from '@utils/logger';
 
 // App configuration interface
@@ -76,6 +76,26 @@ const CONFIG_KEYS = {
   featureExploratory: 'feature_exploratory',
 } as const;
 
+const LLM_KEY_MAP: Record<keyof AppConfig['llm'], string> = {
+  provider: CONFIG_KEYS.llmProvider,
+  apiKey: CONFIG_KEYS.llmApiKey,
+  baseUrl: CONFIG_KEYS.llmBaseUrl,
+  model: CONFIG_KEYS.llmModel,
+  timeout: CONFIG_KEYS.llmTimeout,
+  maxRetries: CONFIG_KEYS.llmMaxRetries,
+};
+
+const APP_KEY_MAP: Record<Exclude<keyof AppConfig['app'], 'dataRetentionDays'>, string> = {
+  language: CONFIG_KEYS.appLanguage,
+  logLevel: CONFIG_KEYS.appLogLevel,
+};
+
+const FEATURE_KEY_MAP: Record<keyof AppConfig['features'], string> = {
+  enableNotifications: CONFIG_KEYS.featureNotifications,
+  enableDeepLayer: CONFIG_KEYS.featureDeepLayer,
+  enableExploratoryClaims: CONFIG_KEYS.featureExploratory,
+};
+
 class ConfigManager {
   private config: AppConfig;
 
@@ -89,7 +109,7 @@ class ConfigManager {
   async init(): Promise<void> {
     try {
       // Ensure database is ready
-      getDatabase();
+      await initDatabase();
 
       // Load saved settings from database
       const settings = dbQuery.all<{ key: string; value: string }>(
@@ -167,7 +187,8 @@ class ConfigManager {
     const updateInTx = () => {
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
-          const configKey = `config_llm_${key}`;
+          const mappedKey = LLM_KEY_MAP[key as keyof AppConfig['llm']];
+          const configKey = `config_${mappedKey}`;
           dbQuery.run(
             'INSERT OR REPLACE INTO app_settings (id, key, value, updated_at) VALUES (?, ?, ?, ?)',
             [configKey, configKey, JSON.stringify(value), new Date().toISOString()]
@@ -190,7 +211,10 @@ class ConfigManager {
     const updateInTx = () => {
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
-          const configKey = `config_app_${key}`;
+          const mappedKey = APP_KEY_MAP[key as keyof typeof APP_KEY_MAP];
+          if (!mappedKey) continue;
+
+          const configKey = `config_${mappedKey}`;
           dbQuery.run(
             'INSERT OR REPLACE INTO app_settings (id, key, value, updated_at) VALUES (?, ?, ?, ?)',
             [configKey, configKey, JSON.stringify(value), new Date().toISOString()]
@@ -213,7 +237,8 @@ class ConfigManager {
     const updateInTx = () => {
       for (const [key, value] of Object.entries(updates)) {
         if (value !== undefined) {
-          const configKey = `config_feature_${key}`;
+          const mappedKey = FEATURE_KEY_MAP[key as keyof AppConfig['features']];
+          const configKey = `config_${mappedKey}`;
           dbQuery.run(
             'INSERT OR REPLACE INTO app_settings (id, key, value, updated_at) VALUES (?, ?, ?, ?)',
             [configKey, configKey, JSON.stringify(value), new Date().toISOString()]

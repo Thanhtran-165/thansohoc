@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { JournalEntry, CreateJournalEntryInput, UpdateJournalEntryInput } from '@/types';
 import { dbQuery } from '@services/database';
 import { getCurrentTimestamp, getCurrentDateISO } from '@utils/date';
+import { trackEvent } from '@services/analytics';
 
 interface JournalState {
   // State
@@ -39,6 +40,15 @@ export const useJournalStore = create<JournalState>((set, get) => ({
         `SELECT * FROM journal_entries WHERE user_id = ? AND date = ?`,
         [userId, today]
       );
+
+      if (entry) {
+        entry.emotions = typeof entry.emotions === 'string'
+          ? JSON.parse(entry.emotions)
+          : entry.emotions;
+        entry.key_events = typeof entry.key_events === 'string'
+          ? JSON.parse(entry.key_events)
+          : entry.key_events;
+      }
 
       set({ todayEntry: entry || null, isLoading: false });
     } catch (error) {
@@ -85,6 +95,15 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     );
 
     set({ todayEntry: entry });
+    await trackEvent('journal_saved', {
+      userId: entry.user_id,
+      payload: {
+        date: entry.date,
+        mood_score: entry.mood_score,
+        energy_score: entry.energy_score,
+        is_edit: false,
+      },
+    });
     return entry;
   },
 
@@ -135,6 +154,15 @@ export const useJournalStore = create<JournalState>((set, get) => ({
         ...todayEntry,
         ...input,
         updated_at: now,
+      },
+    });
+    await trackEvent('journal_saved', {
+      userId: todayEntry.user_id,
+      payload: {
+        date: todayEntry.date,
+        mood_score: input.mood_score ?? todayEntry.mood_score,
+        energy_score: input.energy_score ?? todayEntry.energy_score,
+        is_edit: true,
       },
     });
   },

@@ -6,6 +6,7 @@
 
 import { logger } from '../../utils/logger';
 import { DEFAULT_LLM_CONFIG, LLMConfig, APIErrorType } from '../insight/types';
+import { configManager } from '../config';
 
 export interface LLMResponse {
   content: string;
@@ -84,6 +85,12 @@ function classifyError(error: unknown): LLMError {
  */
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function readEnvironmentApiKey(): string {
+  const nodeApiKey = typeof process !== 'undefined' ? process.env?.DEEPSEEK_API_KEY : undefined;
+  const viteApiKey = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_DEEPSEEK_API_KEY : undefined;
+  return nodeApiKey || viteApiKey || '';
 }
 
 /**
@@ -226,36 +233,37 @@ export class LLMClient {
 export async function createLLMClientAsync(apiKey?: string): Promise<LLMClient> {
   let key = apiKey;
 
-  if (!key) {
-    // Try to get from config manager
-    const { configManager } = await import('../config');
-    await configManager.init();
-    key = configManager.getConfig().llm.apiKey;
-  }
-
-  if (!key) {
-    // Fallback to environment variable
-    key = process.env.DEEPSEEK_API_KEY || '';
-  }
+  await configManager.init();
+  const config = configManager.getConfig();
+  key = key || config.llm.apiKey || readEnvironmentApiKey();
 
   if (!key) {
     logger.warn('No DeepSeek API key provided. LLM client will not work.');
   }
 
-  return new LLMClient(key);
+  return new LLMClient(key, config.llm.baseUrl, {
+    model: config.llm.model,
+    timeout: config.llm.timeout,
+    maxRetries: config.llm.maxRetries,
+  });
 }
 
 /**
  * Create a default LLM client instance (synchronous version)
  */
 export function createLLMClient(apiKey?: string): LLMClient {
-  const key = apiKey || process.env.DEEPSEEK_API_KEY || '';
+  const config = configManager.getConfig();
+  const key = apiKey || config.llm.apiKey || readEnvironmentApiKey();
 
   if (!key) {
     logger.warn('No DeepSeek API key provided. LLM client will not work.');
   }
 
-  return new LLMClient(key);
+  return new LLMClient(key, config.llm.baseUrl, {
+    model: config.llm.model,
+    timeout: config.llm.timeout,
+    maxRetries: config.llm.maxRetries,
+  });
 }
 
 // Export for convenience

@@ -30,7 +30,8 @@
       "@stores/*": ["src/stores/*"],
       "@types/*": ["src/types/*"],
       "@utils/*": ["src/utils/*"],
-      "@db/*": ["src/db/*"]
+      "@db/*": ["src/db/*"],
+      "@localization": ["src/localization"]
     }
   },
   "include": ["src"],

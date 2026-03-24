@@ -16,6 +16,18 @@ export interface UserContext {
   style_preference: 'gentle' | 'direct' | 'practical' | 'spiritual';
   insight_length: 'brief' | 'detailed';
   language: 'vi' | 'en';
+  recent_context?: {
+    current_streak: number;
+    report_days_last_7: number;
+    viewed_days_last_7: number;
+    previous_insight?: {
+      date: string;
+      headline: string;
+      theme: string;
+    } | null;
+    recent_themes: string[];
+    recent_headlines: string[];
+  };
 }
 
 // Numerology context for insight generation

@@ -4,7 +4,6 @@
  */
 
 import { useUserStore } from '@stores/userStore';
-import { formatDateDisplay } from '@utils/date';
 import messages from '@localization';
 
 // Vietnamese day names
@@ -21,7 +20,17 @@ function formatVietnameseDate(date: Date): string {
   return `${dayName}, ngày ${day} ${month}`;
 }
 
-export default function Header() {
+interface HeaderProps {
+  showMenuButton?: boolean;
+  isMobileNavOpen?: boolean;
+  onMenuToggle?: () => void;
+}
+
+export default function Header({
+  showMenuButton = false,
+  isMobileNavOpen = false,
+  onMenuToggle,
+}: HeaderProps) {
   const { profile } = useUserStore();
 
   return (
@@ -29,6 +38,22 @@ export default function Header() {
       <div className="flex items-center justify-between h-full px-6">
         {/* App Title */}
         <div className="flex items-center gap-3">
+          {showMenuButton && (
+            <button
+              type="button"
+              onClick={onMenuToggle}
+              aria-label={isMobileNavOpen ? messages.nav.closeMenu : messages.nav.openMenu}
+              className="lg:hidden w-10 h-10 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <svg className="w-5 h-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isMobileNavOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          )}
           <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">N</span>
           </div>
@@ -40,7 +65,7 @@ export default function Header() {
         {/* Right Section */}
         <div className="flex items-center gap-4">
           {/* Date */}
-          <span className="text-sm text-gray-500">
+          <span className="hidden md:block text-sm text-gray-500">
             {formatVietnameseDate(new Date())}
           </span>
 
@@ -52,7 +77,7 @@ export default function Header() {
                   {profile.full_name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="hidden sm:block text-sm font-medium text-gray-700">
                 {profile.full_name}
               </span>
             </div>

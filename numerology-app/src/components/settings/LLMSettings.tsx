@@ -12,9 +12,12 @@ import messages from '@localization';
 
 // Available models - keep it simple (default + 1 alternative)
 const AVAILABLE_MODELS = [
-  { value: 'deepseek-reasoner', label: messages.llmSettings.fields.model.options.deepseekReasoner },
   { value: 'deepseek-chat', label: messages.llmSettings.fields.model.options.deepseekChat },
+  { value: 'deepseek-reasoner', label: messages.llmSettings.fields.model.options.deepseekReasoner },
 ];
+
+// Test connection timeout - longer for reasoning models
+const TEST_TIMEOUT_MS = 30000; // 30 seconds
 
 // Configuration status types
 type ConfigStatus = 'not_configured' | 'saved_not_tested' | 'connection_successful' | 'last_test_failed';
@@ -181,8 +184,9 @@ export default function LLMSettings() {
     }
   };
 
-  // Handle test connection (does NOT save settings)
+  // Handle test connection (does NOT save settings - uses current form values)
   const handleTestConnection = async () => {
+    // Check for empty API key first
     if (!state.apiKey.trim()) {
       setState(prev => ({
         ...prev,
@@ -191,48 +195,75 @@ export default function LLMSettings() {
       }));
       return;
     }
+
+    // Set testing state
     setState(prev => ({ ...prev, testResult: 'testing', testMessage: messages.llmSettings.testMessages.testing }));
+
+    // Create timeout promise for UI feedback
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), TEST_TIMEOUT_MS);
+    });
+
     try {
       const client = new LLMClient(state.apiKey, 'https://api.deepseek.com/v1', {
         model: state.model,
-        maxTokens: 100,
+        maxTokens: 50,
         temperature: 0.7,
-        timeout: 15000,
-        maxRetries: 1,
-        retryDelays: [2000],
+        timeout: TEST_TIMEOUT_MS,
+        maxRetries: 0, // No retries for test - fail fast
+        retryDelays: [],
       });
-      const response = await client.chatCompletion(
-        'You are a helpful assistant. Respond with exactly: "Connection successful"',
-        'Say "Connection successful"',
-        'test-connection'
-      );
-      if (response.content) {
-        setState(prev => ({
-          ...prev,
-          testResult: 'success',
-          testMessage: '',
-        }));
-      }
+
+      // Race between API call and timeout
+      await Promise.race([
+        client.chatCompletion(
+          'You are a helpful assistant. Respond with exactly: "Connection successful"',
+          'Say "Connection successful"',
+          'test-connection'
+        ),
+        timeoutPromise
+      ]);
+
+      // Connection succeeded - always set success if we got here without error
+      setState(prev => ({
+        ...prev,
+        testResult: 'success',
+        testMessage: '',
+      }));
+
+      logger.info('LLM connection test successful', { model: state.model });
     } catch (error) {
+      // Determine specific error message
       let message = messages.llmSettings.testMessages.connectionFailed;
-      if (error instanceof Error) {
-        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+
+      // Check for error message - handle both Error instances and plain objects (LLMError)
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String((error as { message: string }).message).toLowerCase()
+        : String(error).toLowerCase();
+
+      if (errorMessage) {
+        if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('invalid')) {
           message = messages.llmSettings.testMessages.invalidApiKey;
-        } else if (error.message.includes('404')) {
+        } else if (errorMessage.includes('404') || errorMessage.includes('model') || errorMessage.includes('not found')) {
           message = messages.llmSettings.testMessages.modelNotAvailable;
-        } else if (error.message.includes('timeout')) {
+        } else if (errorMessage.includes('timeout') || errorMessage.includes('timed out') || errorMessage.includes('abort') || errorMessage.includes('request timeout')) {
           message = messages.llmSettings.testMessages.timeout;
-        } else if (error.message.includes('network') || error.message.includes('ECONNREFUSED')) {
+        } else if (errorMessage.includes('network') || errorMessage.includes('econnrefused') || errorMessage.includes('fetch') || errorMessage.includes('failed to fetch')) {
           message = messages.llmSettings.testMessages.networkError;
-        } else if (error.message.includes('429')) {
+        } else if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('too many')) {
           message = messages.llmSettings.testMessages.rateLimit;
+        } else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503') || errorMessage.includes('server')) {
+          message = messages.llmSettings.testMessages.connectionFailed;
         }
       }
+
       setState(prev => ({
         ...prev,
         testResult: 'error',
         testMessage: message,
       }));
+
+      logger.warn('LLM connection test failed', { error: errorMessage || 'unknown' });
     }
   };
 

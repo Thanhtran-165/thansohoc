@@ -11,7 +11,7 @@ import { useUserStore } from '@stores/userStore';
 import { useInsightStore } from '@stores/insightStore';
 import { calculateCoreNumbers } from '@services/numerology';
 import { CoreNumerologyResult } from '@services/numerology';
-import { StylePreference, InsightLength } from '@/types';
+import { StylePreference, InsightLength, UserProfile } from '@/types';
 import messages from '@localization';
 
 type EditMode = 'none' | 'personal' | 'preferences';
@@ -28,7 +28,7 @@ interface PreferencesForm {
 
 export default function Profile() {
   const { profile, isLoading, updateProfile } = useUserStore();
-  const { todayInsight } = useInsightStore();
+  const { todayInsight, regenerateTodayInsight } = useInsightStore();
   const [editMode, setEditMode] = useState<EditMode>('none');
   const [personalForm, setPersonalForm] = useState<PersonalForm | null>(null);
   const [preferencesForm, setPreferencesForm] = useState<PreferencesForm | null>(null);
@@ -84,6 +84,8 @@ export default function Profile() {
     setSaveStatus('idle');
     try {
       await updateProfile(personalForm);
+      const updatedProfile = { ...profile, ...personalForm } as UserProfile;
+      await regenerateTodayInsight(updatedProfile);
       setEditMode('none');
       setPersonalForm(null);
       setSaveStatus('success');
@@ -103,6 +105,8 @@ export default function Profile() {
     setSaveStatus('idle');
     try {
       await updateProfile(preferencesForm);
+      const updatedProfile = { ...profile, ...preferencesForm } as UserProfile;
+      await regenerateTodayInsight(updatedProfile);
       setEditMode('none');
       setPreferencesForm(null);
       setSaveStatus('success');

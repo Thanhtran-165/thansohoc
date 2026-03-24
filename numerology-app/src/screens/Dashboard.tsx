@@ -1,112 +1,202 @@
 /**
  * Dashboard Screen
- * Main dashboard combining insight display and journal entry - Vietnamese UI
- *
- * Phase 4: Full implementation with real components
+ * One-way daily numerology report flow.
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useUserStore } from '@stores/userStore';
 import { useInsightStore } from '@stores/insightStore';
-import { useJournalStore } from '@stores/journalStore';
 import { InsightCard } from '@components/insight';
-import { JournalForm } from '@components/journal';
-import { DailyInsight } from '@/types';
+import { PracticeSummary } from '@/types';
 import messages from '@localization';
+import { getPracticeSummary } from '@services/dailyPractice';
 
 export default function Dashboard() {
   const { profile } = useUserStore();
-  const { todayInsight, isLoading: insightLoading, loadTodayInsight } = useInsightStore();
-  const { todayEntry, isLoading: journalLoading, loadTodayEntry } = useJournalStore();
-  const [showJournalForm, setShowJournalForm] = useState(false);
+  const {
+    todayInsight,
+    isLoading: insightLoading,
+    error: insightError,
+    ensureTodayInsight,
+    regenerateTodayInsight,
+  } = useInsightStore();
+  const [practiceSummary, setPracticeSummary] = useState<PracticeSummary | null>(null);
 
-  // Load today's data on mount
   useEffect(() => {
     if (profile?.id) {
-      loadTodayInsight(profile.id);
-      loadTodayEntry(profile.id);
+      ensureTodayInsight(profile);
     }
-  }, [profile?.id, loadTodayInsight, loadTodayEntry]);
+  }, [
+    profile?.id,
+    profile?.full_name,
+    profile?.date_of_birth,
+    profile?.style_preference,
+    profile?.insight_length,
+    ensureTodayInsight,
+  ]);
+
+  useEffect(() => {
+    if (profile?.id) {
+      setPracticeSummary(getPracticeSummary(profile.id));
+    }
+  }, [profile?.id, todayInsight?.id, todayInsight?.viewed_at]);
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {getVietnameseGreeting()}, {profile?.full_name?.split(' ')[0] || ''}
-        </h1>
-        <p className="text-gray-600 mt-1">
-          {messages.dashboard.insightSubtitle}
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <section className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.24),_transparent_32%),linear-gradient(135deg,_#fffaf2_0%,_#ffffff_45%,_#f5f9ff_100%)] px-6 py-8 shadow-sm">
+        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-amber-200/20 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-32 w-32 rounded-full bg-sky-200/20 blur-3xl" />
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Insight - Takes 2 columns */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {messages.dashboard.todaysInsight}
-            </h2>
+        <div className="relative">
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+            <span>{getVietnameseGreeting()}</span>
+            <span className="h-1 w-1 rounded-full bg-slate-300" />
+            <span>{formatVietnameseLongDate(new Date())}</span>
+          </div>
 
-            {insightLoading ? (
-              <InsightSkeleton />
-            ) : todayInsight ? (
-              <InsightCard
-                insight={todayInsight}
-                showFeedback={true}
-                showWhyModal={true}
-              />
-            ) : (
-              <EmptyInsightState />
-            )}
+          <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            {messages.dashboard.dailyReport}
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            {messages.dashboard.dailyReportDescription}
+          </p>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="rounded-2xl border border-white/70 bg-white/80 p-5 backdrop-blur">
+              <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                {messages.dashboard.generatedForToday}
+              </div>
+              <div className="mt-3 flex flex-wrap items-end gap-3">
+                <h2 className="text-2xl font-semibold text-slate-900">
+                  {todayInsight?.headline || messages.dashboard.todaysInsight}
+                </h2>
+                {todayInsight?.theme && (
+                  <span className="rounded-full bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700 ring-1 ring-sky-200">
+                    {todayInsight.theme}
+                  </span>
+                )}
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {todayInsight
+                  ? stripClaimMarkers(todayInsight.layers.quick.content)
+                  : messages.dashboard.insightSubtitle}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-950 p-5 text-white shadow-lg shadow-slate-950/10">
+              <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                {messages.dashboard.reportGuidance}
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                <OverviewMetric
+                  label={messages.dashboard.numerology.personalDay}
+                  value={todayInsight?.personal_day ?? '?'}
+                />
+                <OverviewMetric
+                  label={messages.dashboard.numerology.personalMonth}
+                  value={todayInsight?.personal_month ?? '?'}
+                />
+                <OverviewMetric
+                  label={messages.dashboard.numerology.personalYear}
+                  value={todayInsight?.personal_year ?? '?'}
+                />
+              </div>
+              <div className="mt-4 border-t border-white/10 pt-4 space-y-2">
+                <CadenceRow
+                  label={messages.dashboard.practice.streak}
+                  value={`${practiceSummary?.current_streak ?? 0}`}
+                />
+                <CadenceRow
+                  label={messages.dashboard.practice.weeklyCompletion}
+                  value={`${practiceSummary?.report_coverage_last_7 ?? 0}%`}
+                />
+                <CadenceRow
+                  label={messages.history.cards.reportsRead}
+                  value={`${practiceSummary?.viewed_days_last_7 ?? 0}/${practiceSummary?.report_days_last_7 ?? 0}`}
+                />
+                <Link
+                  to="/history"
+                  className="mt-4 inline-flex text-sm font-medium text-amber-300 transition hover:text-amber-200"
+                >
+                  {messages.dashboard.archiveLink}
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Journal Entry - Takes 1 column */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {messages.dashboard.quickJournal}
-            </h2>
-
-            {journalLoading ? (
-              <JournalSkeleton />
-            ) : todayEntry && !showJournalForm ? (
-              <JournalCard
-                entry={todayEntry}
-                onEdit={() => setShowJournalForm(true)}
-              />
-            ) : (
-              <JournalForm
-                mode="quick"
-                onSuccess={() => {
-                  setShowJournalForm(false);
-                  if (profile?.id) {
-                    loadTodayEntry(profile.id);
-                  }
-                }}
-                onCancel={todayEntry ? () => setShowJournalForm(false) : undefined}
-              />
-            )}
+      <section className="rounded-[28px] border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-6 py-5">
+          <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+            {messages.dashboard.detailedReport}
           </div>
-        </div>
-      </div>
-
-      {/* Numerology Summary */}
-      <div className="mt-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            {messages.dashboard.yourNumbers}
+          <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+            {messages.dashboard.todaysInsight}
           </h2>
-          <NumerologySummary insight={todayInsight} />
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            App đọc ngày hiện tại và hồ sơ của bạn để tạo ra bản báo cáo này. Bạn không cần nhập mood, energy hay hoạt động hằng ngày để nhận được nội dung chính.
+          </p>
         </div>
-      </div>
+
+        <div className="px-4 py-4 sm:px-6 sm:py-6">
+          {insightLoading ? (
+            <InsightSkeleton />
+          ) : todayInsight ? (
+            <InsightCard
+              insight={todayInsight}
+              showFeedback={true}
+              showWhyModal={true}
+            />
+          ) : (
+            <EmptyInsightState
+              error={insightError}
+              onRetry={profile ? () => regenerateTodayInsight(profile) : undefined}
+            />
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+          {messages.nav.history}
+        </div>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+          Kho lưu trữ các báo cáo đã phát hành
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+          Mỗi ngày app tạo một báo cáo riêng và lưu lại để bạn có thể đọc lại bất cứ lúc nào, theo dõi chủ đề lặp lại và xem nhịp đọc của mình.
+        </p>
+        <Link
+          to="/history"
+          className="mt-5 inline-flex rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+        >
+          {messages.actions.viewHistory}
+        </Link>
+      </section>
     </div>
   );
 }
 
-// Helper function for Vietnamese greeting
+function OverviewMetric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/10">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{label}</div>
+      <div className="mt-2 text-2xl font-semibold text-white">{value}</div>
+    </div>
+  );
+}
+
+function CadenceRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between text-sm text-slate-300">
+      <span>{label}</span>
+      <span className="font-semibold text-white">{value}</span>
+    </div>
+  );
+}
+
 function getVietnameseGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return messages.greeting.morning;
@@ -114,127 +204,70 @@ function getVietnameseGreeting(): string {
   return messages.greeting.evening;
 }
 
-// Skeleton components
+function formatVietnameseLongDate(date: Date): string {
+  return date.toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function stripClaimMarkers(content: string): string {
+  return content.replace(/\[(Calculated|Interpreted|Exploratory)\]\s*/g, '').trim();
+}
+
 function InsightSkeleton() {
   return (
-    <div className="animate-pulse">
-      <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-      <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
-      <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+    <div className="animate-pulse space-y-4">
+      <div className="h-7 w-2/5 rounded bg-slate-200" />
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="h-24 rounded-2xl bg-slate-100" />
+        <div className="h-24 rounded-2xl bg-slate-100" />
+        <div className="h-24 rounded-2xl bg-slate-100" />
+      </div>
+      <div className="space-y-2 rounded-2xl bg-slate-50 p-6">
+        <div className="h-4 w-full rounded bg-slate-200" />
+        <div className="h-4 w-11/12 rounded bg-slate-200" />
+        <div className="h-4 w-10/12 rounded bg-slate-200" />
+        <div className="h-4 w-8/12 rounded bg-slate-200" />
+      </div>
     </div>
   );
 }
 
-function JournalSkeleton() {
+function EmptyInsightState({
+  error,
+  onRetry,
+}: {
+  error?: string | null;
+  onRetry?: () => void;
+}) {
   return (
-    <div className="animate-pulse">
-      <div className="h-20 bg-gray-200 rounded mb-4"></div>
-      <div className="h-10 bg-gray-200 rounded"></div>
-    </div>
-  );
-}
-
-// Empty state
-function EmptyInsightState() {
-  return (
-    <div className="text-center py-8">
-      <div className="w-12 h-12 bg-primary-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-        <svg className="w-6 h-6 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    <div className="py-10 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 ring-1 ring-sky-100">
+        <svg className="h-7 w-7 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
       </div>
-      <h3 className="text-gray-900 font-medium mb-2">{messages.dashboard.noInsight.title}</h3>
-      <p className="text-gray-500 text-sm">
+      <h3 className="text-lg font-medium text-slate-800">{messages.dashboard.noInsight.title}</h3>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
         {messages.dashboard.noInsight.description}
       </p>
-    </div>
-  );
-}
-
-// Journal Card for displaying existing entry
-function JournalCard({ entry, onEdit }: { entry: any; onEdit: () => void }) {
-  return (
-    <div>
-      <div className="flex gap-4 mb-4">
-        <div className="flex-1">
-          <div className="text-sm text-gray-500 mb-1">{messages.dashboard.journal.mood}</div>
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-              <div
-                key={n}
-                className={`w-2 h-4 rounded ${
-                  n <= entry.mood_score ? 'bg-primary-500' : 'bg-gray-200'
-                }`}
-              />
-            ))}
-            <span className="ml-2 text-sm font-medium text-gray-700">{entry.mood_score}</span>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="text-sm text-gray-500 mb-1">{messages.dashboard.journal.energy}</div>
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-              <div
-                key={n}
-                className={`w-2 h-4 rounded ${
-                  n <= entry.energy_score ? 'bg-amber-500' : 'bg-gray-200'
-                }`}
-              />
-            ))}
-            <span className="ml-2 text-sm font-medium text-gray-700">{entry.energy_score}</span>
-          </div>
-        </div>
-      </div>
-      {entry.emotions?.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {entry.emotions.map((emotion: string) => (
-            <span
-              key={emotion}
-              className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full"
-            >
-              {emotion}
-            </span>
-          ))}
-        </div>
-      )}
-      {entry.reflection_text && (
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-          {entry.reflection_text}
+      {error && (
+        <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-amber-700">
+          {error}
         </p>
       )}
-      <button
-        onClick={onEdit}
-        className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-      >
-        {messages.dashboard.journal.editEntry}
-      </button>
-    </div>
-  );
-}
-
-// Numerology Summary with real data from insight
-function NumerologySummary({ insight }: { insight: DailyInsight | null }) {
-  // Get cyclic numbers from insight or show placeholders
-  const numbers = [
-    { label: messages.dashboard.numerology.personalDay, value: insight?.personal_day ?? '?' },
-    { label: messages.dashboard.numerology.personalMonth, value: insight?.personal_month ?? '?' },
-    { label: messages.dashboard.numerology.personalYear, value: insight?.personal_year ?? '?' },
-  ];
-
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      {numbers.map((num) => (
-        <div
-          key={num.label}
-          className="text-center p-4 bg-gray-50 rounded-lg"
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-5 inline-flex rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
-          <div className="text-2xl font-bold text-primary-600 mb-1">
-            {num.value}
-          </div>
-          <div className="text-xs text-gray-500">{num.label}</div>
-        </div>
-      ))}
+          Tạo báo cáo hôm nay
+        </button>
+      )}
     </div>
   );
 }

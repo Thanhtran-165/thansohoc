@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS why_this_insights (
   calculated_claims TEXT NOT NULL,
   interpretation_basis TEXT NOT NULL,
   confidence_breakdown TEXT NOT NULL,
+  explanation TEXT,
   generated_at TEXT NOT NULL,
   FOREIGN KEY (insight_id) REFERENCES daily_insights(id) ON DELETE CASCADE
 );
@@ -98,6 +99,7 @@ CREATE TABLE IF NOT EXISTS insight_feedback (
   was_relevant INTEGER,
   was_helpful INTEGER,
   most_useful_claim_type TEXT,
+  tags TEXT,
   feedback_text TEXT,
   created_at TEXT NOT NULL,
   FOREIGN KEY (insight_id) REFERENCES daily_insights(id) ON DELETE CASCADE,
@@ -121,6 +123,18 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY (user_id) REFERENCES user_profiles(id) ON DELETE CASCADE
+);
+
+-- AnalyticsEvents
+-- Local telemetry for engagement and retention diagnostics
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  name TEXT NOT NULL,
+  screen TEXT,
+  payload TEXT,
+  occurred_on TEXT NOT NULL,
+  created_at TEXT NOT NULL
 );
 
 -- AppSettings

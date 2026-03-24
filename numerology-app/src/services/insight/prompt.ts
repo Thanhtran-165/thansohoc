@@ -6,6 +6,7 @@
 
 import { logger } from '../../utils/logger';
 import { InsightRequest, PROMPT_VERSION } from './types';
+import { getCurrentDateISO } from '@utils/date';
 
 /**
  * System prompt (static) - defines AI behavior and output requirements
@@ -74,7 +75,12 @@ Use instead of absolute statements:
 - "Some people find..." (non-absolute)
 - "This could suggest..." (tentative)
 - "You may want to explore..." (invitation)
-- "There's an energy of..." (descriptive)`;
+- "There's an energy of..." (descriptive)
+
+## CONTINUITY
+- If recent_context is present, use it to create continuity from recent reports without sounding repetitive
+- You MAY reference a recent theme shift, reading cadence, or streak gently, but never imply certainty or causation
+- Prefer progression language such as "building on", "continuing", "shifting from", or "rebalancing" when supported by context`;
 
 /**
  * Build the user message payload for the LLM
@@ -88,6 +94,7 @@ export function buildUserMessage(request: InsightRequest): string {
       style_preference: request.user.style_preference,
       insight_length: request.user.insight_length,
       language: request.user.language,
+      recent_context: request.user.recent_context,
     },
     numerology: request.numerology,
     date: request.date,
@@ -177,6 +184,7 @@ export function createInsightRequest(
     insight_length?: 'brief' | 'detailed';
     language?: 'vi' | 'en';
     date?: string;
+    recent_context?: InsightRequest['user']['recent_context'];
   } = {}
 ): InsightRequest {
   const requestId = crypto.randomUUID();
@@ -189,9 +197,10 @@ export function createInsightRequest(
       style_preference: options.style_preference || 'practical',
       insight_length: options.insight_length || 'detailed',
       language: options.language || 'en',
+      recent_context: options.recent_context,
     },
     numerology,
-    date: options.date || new Date().toISOString().split('T')[0],
+    date: options.date || getCurrentDateISO(),
     request_id: requestId,
   };
 }

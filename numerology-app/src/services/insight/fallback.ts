@@ -13,7 +13,15 @@ import {
   SCHEMA_VERSION,
   Claim,
 } from './types';
-import { getDatabase } from '../database';
+import {
+  deleteLocalTableRows,
+  getDatabase,
+  getLocalTableRows,
+  isLocalStorageDatabase,
+  replaceLocalTableRows,
+  upsertLocalTableRow,
+} from '../database';
+import { getCurrentDateISO } from '@utils/date';
 
 /**
  * Retrieve cached insight from fallback cache
@@ -23,7 +31,43 @@ export async function getCachedInsight(
   currentDate: string
 ): Promise<InsightResponse | null> {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
+
+    if (isLocalStorageDatabase(database)) {
+      const cached = getLocalTableRows<Record<string, unknown>>('fallback_cache')
+        .filter((row) => row.user_id === userId && String(row.original_date ?? '') < currentDate)
+        .sort((a, b) => String(b.original_date ?? '').localeCompare(String(a.original_date ?? '')))[0];
+
+      if (!cached) {
+        logger.debug('No cached insight available', { user_id: userId });
+        return null;
+      }
+
+      const insight = JSON.parse(cached.insight_json as string) as InsightResponse;
+      insight.is_fallback = true;
+      insight.fallback_reason = 'no_cache';
+
+      const updatedRows = getLocalTableRows<Record<string, unknown>>('fallback_cache').map((row) => (
+        row.user_id === userId && row.original_date === cached.original_date
+          ? {
+              ...row,
+              times_used: Number(row.times_used ?? 0) + 1,
+              last_used_at: new Date().toISOString(),
+            }
+          : row
+      ));
+      replaceLocalTableRows('fallback_cache', updatedRows);
+
+      logger.info('Retrieved cached insight for fallback', {
+        user_id: userId,
+        original_date: cached.original_date,
+        times_used: Number(cached.times_used ?? 0) + 1,
+      });
+
+      return insight;
+    }
+
+    const db = database;
 
     // Try to get the most recent cached insight (not from today)
     const cached = db
@@ -84,8 +128,25 @@ export async function cacheInsight(
   insight: InsightResponse
 ): Promise<void> {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
     const insightId = crypto.randomUUID();
+
+    if (isLocalStorageDatabase(database)) {
+      upsertLocalTableRow('fallback_cache', {
+        id: insightId,
+        user_id: userId,
+        insight_id: insight.request_id,
+        original_date: insight.generated_at.split('T')[0],
+        insight_json: JSON.stringify(insight),
+        personal_day: insight.insight.personal_day,
+        times_used: 0,
+        created_at: new Date().toISOString(),
+        last_used_at: null,
+      });
+      return;
+    }
+
+    const db = database;
 
     db.prepare(
       `INSERT INTO fallback_cache
@@ -209,7 +270,7 @@ export async function getFallbackInsight(
   });
 
   // Try cached insight first (primary fallback)
-  const cached = await getCachedInsight(userId, new Date().toISOString().split('T')[0]);
+  const cached = await getCachedInsight(userId, getCurrentDateISO());
 
   if (cached) {
     logger.info('Using cached insight as fallback', {
@@ -235,7 +296,19 @@ export async function getFallbackInsight(
  */
 export function cleanupFallbackCache(): number {
   try {
-    const db = getDatabase();
+    const database = getDatabase();
+
+    if (isLocalStorageDatabase(database)) {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 7);
+      const cutoffIso = cutoff.toISOString();
+      return deleteLocalTableRows<Record<string, unknown>>(
+        'fallback_cache',
+        (row) => String(row.created_at ?? '') < cutoffIso
+      );
+    }
+
+    const db = database;
     const result = db
       .prepare(
         `DELETE FROM fallback_cache

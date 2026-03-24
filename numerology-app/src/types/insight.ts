@@ -104,6 +104,7 @@ export interface InsightFeedback {
   was_relevant: boolean | null;
   was_helpful: boolean | null;
   most_useful_claim_type: ClaimType | null;
+  tags: string[] | null;
   feedback_text: string | null;
   created_at: string;
 }
@@ -115,5 +116,6 @@ export interface CreateInsightFeedbackInput {
   was_relevant?: boolean;
   was_helpful?: boolean;
   most_useful_claim_type?: ClaimType;
+  tags?: string[];
   feedback_text?: string;
 }

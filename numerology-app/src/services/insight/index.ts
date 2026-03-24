@@ -5,7 +5,7 @@
  */
 
 import { logger } from '../../utils/logger';
-import { LLMClient, createLLMClient } from '../api/llm';
+import { LLMClient, createLLMClientAsync } from '../api/llm';
 import { buildPrompt, createInsightRequest } from './prompt';
 import { parseInsightResponse } from './parser';
 import { validateInsight } from './validation';
@@ -14,6 +14,7 @@ import {
   storeDailyInsight,
   getDailyInsight,
   getWhyThisInsight,
+  storeInsightFeedback,
 } from './persistence';
 import {
   InsightRequest,
@@ -24,6 +25,9 @@ import {
   PROMPT_VERSION,
 } from './types';
 import { calculateNumerologyContext } from '../numerology';
+import { getCurrentDateISO } from '@utils/date';
+import { getRecentPracticeContext } from '@services/dailyPractice';
+import { trackEvent } from '@services/analytics';
 
 export interface GenerateInsightOptions {
   userId: string;
@@ -44,10 +48,10 @@ export interface GenerateInsightResult {
  * Insight Service class
  */
 export class InsightService {
-  private llmClient: LLMClient;
+  private llmClientPromise: Promise<LLMClient>;
 
   constructor(apiKey?: string) {
-    this.llmClient = createLLMClient(apiKey);
+    this.llmClientPromise = createLLMClientAsync(apiKey);
   }
 
   /**
@@ -55,7 +59,7 @@ export class InsightService {
    */
   async generateDailyInsight(options: GenerateInsightOptions): Promise<GenerateInsightResult> {
     const { userId, date, force = false, fullName, dateOfBirth } = options;
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    const targetDate = date || getCurrentDateISO();
 
     logger.info('Starting daily insight generation', {
       user_id: userId,
@@ -82,10 +86,13 @@ export class InsightService {
 
     // Get numerology context
     const numerologyContext = this.getNumerologyContext(fullName, dateOfBirth, targetDate);
+    const recentContext = getRecentPracticeContext(userId);
 
     // Create insight request
     const request = createInsightRequest(userId, numerologyContext, {
+      name: fullName,
       date: targetDate,
+      recent_context: recentContext,
     });
 
     // Try to generate via LLM
@@ -125,6 +132,16 @@ export class InsightService {
       is_fallback: isFallback,
     });
 
+    await trackEvent('insight_generated', {
+      userId,
+      payload: {
+        date: targetDate,
+        request_id: insight.request_id,
+        theme: insight.insight.theme,
+        is_fallback: isFallback,
+      },
+    });
+
     return {
       insight,
       fromCache: false,
@@ -150,7 +167,8 @@ export class InsightService {
       request_id: request.request_id,
     });
 
-    const llmResponse = await this.llmClient.chatCompletion(
+    const llmClient = await this.llmClientPromise;
+    const llmResponse = await llmClient.chatCompletion(
       systemPrompt,
       userMessage,
       request.request_id
@@ -235,7 +253,7 @@ export class InsightService {
     userId: string,
     date?: string
   ): Promise<InsightResponse | null> {
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    const targetDate = date || getCurrentDateISO();
     return getDailyInsight(userId, targetDate);
   }
 
@@ -250,10 +268,10 @@ export class InsightService {
       was_relevant?: boolean;
       was_helpful?: boolean;
       most_useful_claim_type?: 'calculated' | 'interpreted' | 'exploratory';
+      tags?: string[];
       feedback_text?: string;
     }
   ): Promise<void> {
-    const { storeInsightFeedback } = await import('./persistence');
     await storeInsightFeedback(userId, insightId, rating, options);
 
     logger.info('Submitted insight feedback', {
