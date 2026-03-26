@@ -39,7 +39,23 @@ const PROFILE_KEY = 'user_profile';
 // Helper functions for localStorage
 function getProfileFromStorage(): UserProfile | null {
   const data = localStorage.getItem(PROFILE_KEY);
-  return data ? JSON.parse(data) : null;
+  if (!data) return null;
+
+  const profile = JSON.parse(data) as UserProfile;
+  let shouldSave = false;
+  if (profile.language !== 'vi') {
+    profile.language = 'vi';
+    shouldSave = true;
+  }
+  if (profile.insight_length !== 'detailed') {
+    profile.insight_length = 'detailed';
+    shouldSave = true;
+  }
+  if (shouldSave) {
+    saveProfileToStorage(profile);
+  }
+
+  return profile;
 }
 
 function saveProfileToStorage(profile: UserProfile): void {
@@ -107,7 +123,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       full_name: input.full_name,
       date_of_birth: input.date_of_birth,
       style_preference: input.style_preference,
-      insight_length: input.insight_length,
+      insight_length: 'detailed',
       language: input.language,
       privacy_mode: 'local_only',
       onboarding_completed: false,
@@ -132,7 +148,12 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
 
     const now = getCurrentTimestamp();
-    const updatedProfile = { ...profile, ...input, updated_at: now };
+    const updatedProfile: UserProfile = {
+      ...profile,
+      ...input,
+      insight_length: 'detailed',
+      updated_at: now,
+    };
 
     if (isLocalStorageMode()) {
       saveProfileToStorage(updatedProfile);

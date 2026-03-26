@@ -2,19 +2,25 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useUserStore } from '@stores/userStore';
 import { useSettingsStore } from '@stores/settingsStore';
+import { useInsightStore } from '@stores/insightStore';
 import ErrorBoundary from '@components/common/ErrorBoundary';
 import AppShell from '@components/layout/AppShell';
 import Onboarding from '@screens/Onboarding';
 import Dashboard from '@screens/Dashboard';
-import History from '@screens/History';
 import Profile from '@screens/Profile';
 import Settings from '@screens/Settings';
-import { clearDesktopNotificationRuntime, ensureNotificationBridge, syncDesktopNotificationRuntime } from '@services/desktopNotifications';
+import {
+  clearDesktopNotificationRuntime,
+  ensureNotificationBridge,
+  syncDesktopLaunchOnStartup,
+  syncDesktopNotificationRuntime,
+} from '@services/desktopNotifications';
 import { trackEvent } from '@services/analytics';
 
 function App() {
   const { isOnboarded, profile, loadProfile } = useUserStore();
   const { notifications, loadSettings } = useSettingsStore();
+  const { ensureTodayInsight } = useInsightStore();
   const [isBootstrapping, setIsBootstrapping] = useState(true);
 
   useEffect(() => {
@@ -63,6 +69,24 @@ function App() {
   }, [profile, notifications]);
 
   useEffect(() => {
+    if (!notifications) {
+      return;
+    }
+
+    syncDesktopLaunchOnStartup(notifications.launch_on_startup).catch((error) => {
+      console.error('Failed to sync launch on startup:', error);
+    });
+  }, [notifications?.launch_on_startup, notifications]);
+
+  useEffect(() => {
+    if (isOnboarded && profile) {
+      ensureTodayInsight(profile).catch((error) => {
+        console.error('Failed to ensure today insight during app startup:', error);
+      });
+    }
+  }, [isOnboarded, profile, ensureTodayInsight]);
+
+  useEffect(() => {
     if (!isBootstrapping) {
       trackEvent('app_opened', {
         userId: profile?.id,
@@ -98,7 +122,6 @@ function App() {
           <>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<AppShell><Dashboard /></AppShell>} />
-            <Route path="/history" element={<AppShell><History /></AppShell>} />
             <Route path="/profile" element={<AppShell><Profile /></AppShell>} />
             <Route path="/settings" element={<AppShell><Settings /></AppShell>} />
             <Route path="/onboarding" element={<Navigate to="/dashboard" replace />} />

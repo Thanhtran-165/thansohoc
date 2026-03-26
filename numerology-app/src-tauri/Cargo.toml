@@ -1,7 +1,7 @@
 [package]
 name = "numerology-app"
 version = "0.1.0"
-description = "Personal Numerology Intelligence System"
+description = "Ứng dụng báo cáo thần số học hằng ngày"
 authors = ["you"]
 license = ""
 repository = ""

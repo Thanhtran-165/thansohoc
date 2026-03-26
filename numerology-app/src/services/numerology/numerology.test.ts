@@ -26,6 +26,13 @@ import {
   calculatePersonalMonth,
   calculatePersonalDay,
   calculateCyclicNumbers,
+  calculateBalanceNumber,
+  calculateKarmicLessons,
+  calculateHiddenPassionNumbers,
+  calculateKarmicDebtNumbers,
+  calculatePinnacles,
+  calculateChallenges,
+  calculateAdvancedNumerologyContext,
   MASTER_NUMBERS,
   LETTER_VALUES,
 } from './index';
@@ -548,6 +555,52 @@ describe('Cyclic Numerology Calculations', () => {
       // Personal Day for 15th = 3 + 6 = 9
       expect(result.personal_day).toBe(9);
     });
+  });
+});
+
+describe('Advanced Numerology Calculations', () => {
+  it('should calculate Balance Number from initials', () => {
+    expect(calculateBalanceNumber('John Doe')).toBe(5);
+  });
+
+  it('should calculate Karmic Lessons as missing values from the name', () => {
+    expect(calculateKarmicLessons('Abe')).toEqual([3, 4, 6, 7, 8, 9]);
+  });
+
+  it('should calculate Hidden Passion numbers from repeated values', () => {
+    expect(calculateHiddenPassionNumbers('John Doe')).toEqual([5, 6]);
+  });
+
+  it('should detect karmic debt from birth day and raw totals', () => {
+    expect(calculateKarmicDebtNumbers('Abe', '1990-06-13')).toContain(13);
+  });
+
+  it('should calculate pinnacle periods using the Pythagorean ruleset', () => {
+    expect(calculatePinnacles('1990-06-15')).toEqual([
+      { cycle: 1, number: 3, from_age: 0, to_age: 32 },
+      { cycle: 2, number: 7, from_age: 33, to_age: 41 },
+      { cycle: 3, number: 1, from_age: 42, to_age: 50 },
+      { cycle: 4, number: 7, from_age: 51, to_age: null },
+    ]);
+  });
+
+  it('should calculate challenge periods and allow zero challenge', () => {
+    expect(calculateChallenges('1990-06-15')).toEqual([
+      { cycle: 1, number: 0, from_age: 0, to_age: 32 },
+      { cycle: 2, number: 5, from_age: 33, to_age: 41 },
+      { cycle: 3, number: 5, from_age: 42, to_age: 50 },
+      { cycle: 4, number: 5, from_age: 51, to_age: null },
+    ]);
+  });
+
+  it('should provide an advanced context snapshot for a target date', () => {
+    const context = calculateAdvancedNumerologyContext('John Doe', '1990-06-15', '2026-03-26');
+
+    expect(context.methodology.school).toBe('pythagorean');
+    expect(context.current_pinnacle.number).toBe(7);
+    expect(context.current_challenge.number).toBe(5);
+    expect(context.balance_number).toBe(5);
+    expect(context.hidden_passion_numbers).toEqual([5, 6]);
   });
 });
 

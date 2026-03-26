@@ -11,7 +11,7 @@ import { useUserStore } from '@stores/userStore';
 import { useInsightStore } from '@stores/insightStore';
 import { calculateCoreNumbers } from '@services/numerology';
 import { CoreNumerologyResult } from '@services/numerology';
-import { StylePreference, InsightLength, UserProfile } from '@/types';
+import { StylePreference, UserProfile } from '@/types';
 import messages from '@localization';
 
 type EditMode = 'none' | 'personal' | 'preferences';
@@ -23,7 +23,6 @@ interface PersonalForm {
 
 interface PreferencesForm {
   style_preference: StylePreference;
-  insight_length: InsightLength;
 }
 
 export default function Profile() {
@@ -71,7 +70,6 @@ export default function Profile() {
   const handleStartPreferencesEdit = () => {
     setPreferencesForm({
       style_preference: profile.style_preference,
-      insight_length: profile.insight_length,
     });
     setEditMode('preferences');
     setSaveStatus('idle');
@@ -277,21 +275,6 @@ export default function Profile() {
               </select>
             </div>
 
-            {/* Insight Length */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {messages.profile.insightLength}
-              </label>
-              <select
-                value={preferencesForm.insight_length}
-                onChange={(e) => setPreferencesForm({ ...preferencesForm, insight_length: e.target.value as InsightLength })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="brief">{messages.onboarding.preferences.lengths.brief.label}</option>
-                <option value="detailed">{messages.onboarding.preferences.lengths.detailed.label}</option>
-              </select>
-            </div>
-
             {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
               <button
@@ -315,10 +298,6 @@ export default function Profile() {
             <PreferenceRow
               label={messages.profile.insightStyle}
               value={formatStylePreference(profile.style_preference)}
-            />
-            <PreferenceRow
-              label={messages.profile.insightLength}
-              value={formatInsightLength(profile.insight_length)}
             />
             <PreferenceRow
               label={messages.profile.language}
@@ -386,14 +365,6 @@ function formatStylePreference(style: StylePreference): string {
     spiritual: messages.onboarding.preferences.styles.spiritual.label,
   };
   return labels[style] || style;
-}
-
-function formatInsightLength(length: InsightLength): string {
-  const labels: Record<InsightLength, string> = {
-    brief: messages.onboarding.preferences.lengths.brief.label,
-    detailed: messages.onboarding.preferences.lengths.detailed.label,
-  };
-  return labels[length] || length;
 }
 
 // Sub-components

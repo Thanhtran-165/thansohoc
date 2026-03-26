@@ -5,6 +5,9 @@ use chrono::{Local, NaiveTime, Timelike};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
+    fs,
+    path::PathBuf,
+    process::Command,
     sync::{Arc, Mutex},
     thread,
     time::Duration,
@@ -104,6 +107,11 @@ fn clear_notification_runtime(runtime: State<NotificationRuntime>) -> Result<(),
     state.schedule = None;
     state.last_sent.clear();
     Ok(())
+}
+
+#[tauri::command]
+fn sync_launch_on_startup(app: AppHandle, enabled: bool) -> Result<(), String> {
+    configure_launch_on_startup(&app, enabled)
 }
 
 fn parse_time(value: &str) -> Option<NaiveTime> {
@@ -262,6 +270,85 @@ fn start_notification_runtime(app: AppHandle, runtime: Arc<Mutex<NotificationRun
     });
 }
 
+#[cfg(target_os = "macos")]
+fn configure_launch_on_startup(app: &AppHandle, enabled: bool) -> Result<(), String> {
+    let home = std::env::var("HOME").map_err(|error| error.to_string())?;
+    let launch_agents_dir = PathBuf::from(home).join("Library/LaunchAgents");
+    fs::create_dir_all(&launch_agents_dir).map_err(|error| error.to_string())?;
+
+    let label = format!("{}.autostart", app.config().tauri.bundle.identifier);
+    let plist_path = launch_agents_dir.join(format!("{}.plist", label));
+
+    let uid_output = Command::new("id")
+        .arg("-u")
+        .output()
+        .map_err(|error| error.to_string())?;
+    let uid = String::from_utf8_lossy(&uid_output.stdout).trim().to_string();
+    let domain = format!("gui/{}", uid);
+    let plist_path_string = plist_path.to_string_lossy().to_string();
+
+    if enabled {
+        let executable = std::env::current_exe().map_err(|error| error.to_string())?;
+        let executable_string = xml_escape(&executable.to_string_lossy());
+        let plist_contents = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>{label}</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{executable}</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <false/>
+</dict>
+</plist>
+"#,
+            label = label,
+            executable = executable_string
+        );
+
+        fs::write(&plist_path, plist_contents).map_err(|error| error.to_string())?;
+
+        let _ = Command::new("launchctl")
+            .args(["bootout", &domain, &plist_path_string])
+            .output();
+        let _ = Command::new("launchctl")
+            .args(["bootstrap", &domain, &plist_path_string])
+            .output();
+
+        return Ok(());
+    }
+
+    let _ = Command::new("launchctl")
+        .args(["bootout", &domain, &plist_path_string])
+        .output();
+
+    if plist_path.exists() {
+        fs::remove_file(plist_path).map_err(|error| error.to_string())?;
+    }
+
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn configure_launch_on_startup(_app: &AppHandle, _enabled: bool) -> Result<(), String> {
+    Ok(())
+}
+
+fn xml_escape(value: &str) -> String {
+    value
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(NotificationRuntime::default())
@@ -272,7 +359,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             sync_notification_runtime,
-            clear_notification_runtime
+            clear_notification_runtime,
+            sync_launch_on_startup
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

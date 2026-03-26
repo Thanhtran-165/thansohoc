@@ -27,7 +27,140 @@ export interface UserContext {
     } | null;
     recent_themes: string[];
     recent_headlines: string[];
+    recurring_themes: Array<{
+      theme: string;
+      count: number;
+    }>;
+    recent_numbers: Array<{
+      date: string;
+      personal_day: number;
+      personal_month: number;
+      personal_year: number;
+    }>;
+    continuity_note: string | null;
+    theme_shift: string | null;
   };
+}
+
+export interface InterpretationForce {
+  source:
+    | 'personal_day'
+    | 'personal_month'
+    | 'personal_year'
+    | 'life_path'
+    | 'destiny_number'
+    | 'soul_urge'
+    | 'birthday_number'
+    | 'balance_number'
+    | 'current_pinnacle'
+    | 'current_challenge'
+    | 'karmic_debt'
+    | 'karmic_lesson'
+    | 'hidden_passion';
+  number: number;
+  label: string;
+  role: 'trigger' | 'field' | 'tone' | 'baseline' | 'support' | 'friction';
+  meaning: string;
+}
+
+export type InterpretationPatternId =
+  | 'movement_with_responsibility'
+  | 'expression_through_structure'
+  | 'reflection_before_action'
+  | 'service_with_boundaries'
+  | 'completion_before_beginning'
+  | 'power_with_balance'
+  | 'steady_build'
+  | 'intuitive_opening';
+
+export interface InterpretationSectionPlan {
+  section:
+    | 'headline_frame'
+    | 'main_current'
+    | 'tension_point'
+    | 'applied_direction'
+    | 'deepening_arc'
+    | 'closing_note';
+  objective: string;
+  anchors: InterpretationForce['source'][];
+  guidance: string;
+}
+
+export interface InterpretationConflictGrammar {
+  kind:
+    | 'push_pull'
+    | 'channeling'
+    | 'recalibration'
+    | 'containment'
+    | 'closure_transition'
+    | 'amplification';
+  summary: string;
+  likely_overcorrection: string;
+  balancing_move: string;
+  naming_rule: string;
+}
+
+export interface InterpretationArchetype {
+  id:
+    | 'threshold_day'
+    | 'anchored_change_day'
+    | 'structured_expression_day'
+    | 'boundary_day'
+    | 'closure_day'
+    | 'builder_day'
+    | 'integration_day';
+  label: string;
+  narrative_role: string;
+  report_emphasis: string;
+  closing_tone: string;
+}
+
+export interface InterpretationAssemblyParagraph {
+  layer: 'quick' | 'standard' | 'deep';
+  order: number;
+  section: InterpretationSectionPlan['section'];
+  intent: string;
+  anchors: InterpretationForce['source'][];
+  must_include: string[];
+  avoid: string[];
+}
+
+export interface InterpretationBlueprint {
+  hierarchy: Array<{
+    source: InterpretationForce['source'];
+    number: number;
+    weight: number;
+    role: InterpretationForce['role'];
+  }>;
+  primary_force: InterpretationForce;
+  supporting_forces: InterpretationForce[];
+  friction_forces: InterpretationForce[];
+  pattern: {
+    id: InterpretationPatternId;
+    label: string;
+    rationale: string;
+  };
+  central_dynamic: string;
+  tension_line: string | null;
+  dominant_axis: {
+    name: string;
+    description: string;
+  };
+  conflict_grammar: InterpretationConflictGrammar;
+  report_archetype: InterpretationArchetype;
+  report_focuses: string[];
+  reading_angles: Array<{
+    area: 'inner_state' | 'relationships' | 'work' | 'decision_making';
+    focus: string;
+  }>;
+  section_plan: InterpretationSectionPlan[];
+  assembly_plan: InterpretationAssemblyParagraph[];
+  methodology_trace: {
+    ruling_stack: InterpretationForce['source'][];
+    emphasis_order: string[];
+    do_not_overweight: InterpretationForce['source'][];
+  };
+  methodology_notes: string[];
 }
 
 // Numerology context for insight generation
@@ -39,6 +172,41 @@ export interface NumerologyContext {
   destiny_number: number;
   soul_urge: number;
   birthday_number: number;
+  advanced: {
+    methodology: {
+      school: 'pythagorean';
+      reduction_rule: 'preserve_11_22_33';
+      modules_used: string[];
+    };
+    balance_number: number;
+    hidden_passion_numbers: number[];
+    karmic_lessons: number[];
+    karmic_debt_numbers: number[];
+    pinnacles: Array<{
+      cycle: 1 | 2 | 3 | 4;
+      number: number;
+      from_age: number;
+      to_age: number | null;
+    }>;
+    challenges: Array<{
+      cycle: 1 | 2 | 3 | 4;
+      number: number;
+      from_age: number;
+      to_age: number | null;
+    }>;
+    current_pinnacle: {
+      cycle: 1 | 2 | 3 | 4;
+      number: number;
+      from_age: number;
+      to_age: number | null;
+    };
+    current_challenge: {
+      cycle: 1 | 2 | 3 | 4;
+      number: number;
+      from_age: number;
+      to_age: number | null;
+    };
+  };
 }
 
 // Input payload for insight generation
@@ -46,6 +214,7 @@ export interface InsightRequest {
   schema_version: string;
   user: UserContext;
   numerology: NumerologyContext;
+  interpretation: InterpretationBlueprint;
   date: string;
   request_id: string;
 }
@@ -102,6 +271,103 @@ export interface InsightMetadata {
   processing_time_ms: number;
 }
 
+export interface InsightPresentationBlocks {
+  visual_scene: {
+    atmosphere: string;
+    movement: string;
+    focal_point: string;
+  };
+  energy_map: Array<{
+    label: string;
+    intensity: 1 | 2 | 3 | 4 | 5;
+    meaning: string;
+  }>;
+  decision_compass: {
+    lean_in: string;
+    hold_steady: string;
+    avoid_force: string;
+  };
+  practical_guidance: Array<{
+    area: 'micro_action' | 'work' | 'relationships' | 'self_regulation';
+    title: string;
+    suggestion: string;
+    timing: string;
+  }>;
+  narrative_beats: Array<{
+    title: string;
+    summary: string;
+  }>;
+  closing_signal: {
+    title: string;
+    phrase: string;
+  };
+}
+
+export interface InsightBlueprintStage {
+  headline: string;
+  theme: string;
+  opening_summary: string;
+  narrative_beats: Array<{
+    title: string;
+    summary: string;
+  }>;
+}
+
+export interface InsightNarrativeStage {
+  layers: InsightLayers;
+  confidence: ConfidenceBreakdown;
+}
+
+export interface InsightPracticalStage {
+  decision_compass: InsightPresentationBlocks['decision_compass'];
+  practical_guidance: InsightPresentationBlocks['practical_guidance'];
+}
+
+export interface InsightPresentationStage {
+  visual_scene: InsightPresentationBlocks['visual_scene'];
+  energy_map: InsightPresentationBlocks['energy_map'];
+  closing_signal: InsightPresentationBlocks['closing_signal'];
+}
+
+export interface InsightDeepExpansionStage {
+  layers: {
+    standard: string;
+    deep: string;
+  };
+}
+
+export interface InsightVoicePolishStage {
+  headline: string;
+  theme: string;
+  layers: {
+    quick: string;
+    standard: string;
+    deep?: string;
+  };
+  visual_scene: InsightPresentationBlocks['visual_scene'];
+  energy_map: InsightPresentationBlocks['energy_map'];
+  decision_compass: InsightPresentationBlocks['decision_compass'];
+  practical_guidance: InsightPresentationBlocks['practical_guidance'];
+  narrative_beats: InsightPresentationBlocks['narrative_beats'];
+  closing_signal: InsightPresentationBlocks['closing_signal'];
+}
+
+export interface InsightSpokenVietnameseStage {
+  headline: string;
+  theme: string;
+  layers: {
+    quick: string;
+    standard: string;
+    deep?: string;
+  };
+  visual_scene: InsightPresentationBlocks['visual_scene'];
+  energy_map: InsightPresentationBlocks['energy_map'];
+  decision_compass: InsightPresentationBlocks['decision_compass'];
+  practical_guidance: InsightPresentationBlocks['practical_guidance'];
+  narrative_beats: InsightPresentationBlocks['narrative_beats'];
+  closing_signal: InsightPresentationBlocks['closing_signal'];
+}
+
 // Complete insight response
 export interface InsightResponse {
   schema_version: string;
@@ -113,6 +379,7 @@ export interface InsightResponse {
     theme: string;
     layers: InsightLayers;
     confidence: ConfidenceBreakdown;
+    presentation?: InsightPresentationBlocks;
     personal_day?: number;
     personal_month?: number;
     personal_year?: number;
@@ -141,6 +408,14 @@ export interface WhyThisInsight {
     numerology_context: string[];
     model_version: string;
     prompt_version: string;
+    methodology_school?: string;
+    dominant_axis?: string;
+    pattern?: string;
+    report_archetype?: string;
+    conflict_grammar?: string;
+    ruling_stack?: InterpretationForce['source'][];
+    section_plan?: string[];
+    assembly_plan?: string[];
   };
   confidence_breakdown: {
     data: number;
@@ -160,7 +435,7 @@ export type APIErrorType = 'timeout' | 'rate_limit' | 'server_error' | 'invalid_
 // LLM API configuration
 export interface LLMConfig {
   model: string;
-  maxTokens: number;
+  maxTokens: number | null;
   temperature: number;
   timeout: number;
   maxRetries: number;
@@ -170,9 +445,9 @@ export interface LLMConfig {
 // Default configuration
 export const DEFAULT_LLM_CONFIG: LLMConfig = {
   model: 'deepseek-reasoner',
-  maxTokens: 4000,
+  maxTokens: null,
   temperature: 0.7,
-  timeout: 10000, // 10 seconds
+  timeout: 90000, // 90 seconds
   maxRetries: 3,
   retryDelays: [2000, 5000, 10000], // 2s, 5s, 10s backoff
 };
@@ -182,8 +457,8 @@ export const RETRY_DELAYS = [2000, 5000, 10000];
 
 // Default schema version
 export const SCHEMA_VERSION = '1.0';
-export const PROMPT_VERSION = '1.0.0';
-export const FALLBACK_PROMPT_VERSION = 'fallback-1.0.0';
+export const PROMPT_VERSION = '2.0.1';
+export const FALLBACK_PROMPT_VERSION = 'fallback-1.5.0';
 
 // Fallback templates for Personal Day themes
 export const PERSONAL_DAY_THEMES: Record<number, { theme: string; meaning: string }> = {

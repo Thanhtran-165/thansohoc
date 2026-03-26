@@ -154,6 +154,98 @@ export function WhyThisInsightModal({
                 </span>
               </div>
             </div>
+            {(data.interpretation_basis.dominant_axis ||
+              data.interpretation_basis.pattern ||
+              data.interpretation_basis.report_archetype ||
+              data.interpretation_basis.conflict_grammar) && (
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {data.interpretation_basis.dominant_axis && (
+                  <div className="rounded-lg bg-white/70 p-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+                      {messages.insight.dominantAxis}
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-purple-800">
+                      {data.interpretation_basis.dominant_axis}
+                    </div>
+                  </div>
+                )}
+                {data.interpretation_basis.pattern && (
+                  <div className="rounded-lg bg-white/70 p-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+                      {messages.insight.pattern}
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-purple-800">
+                      {data.interpretation_basis.pattern}
+                    </div>
+                  </div>
+                )}
+                {data.interpretation_basis.report_archetype && (
+                  <div className="rounded-lg bg-white/70 p-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+                      {messages.insight.reportArchetype}
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-purple-800">
+                      {data.interpretation_basis.report_archetype}
+                    </div>
+                  </div>
+                )}
+                {data.interpretation_basis.conflict_grammar && (
+                  <div className="rounded-lg bg-white/70 p-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+                      {messages.insight.conflictGrammar}
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-purple-800">
+                      {data.interpretation_basis.conflict_grammar}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {data.interpretation_basis.ruling_stack && data.interpretation_basis.ruling_stack.length > 0 && (
+              <div className="mt-4">
+                <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500 mb-2">
+                  {messages.insight.hierarchy}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {data.interpretation_basis.ruling_stack.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-purple-700 ring-1 ring-purple-100"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {data.interpretation_basis.section_plan && data.interpretation_basis.section_plan.length > 0 && (
+              <div className="mt-4">
+                <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500 mb-2">
+                  {messages.insight.reportStructure}
+                </div>
+                <div className="space-y-2">
+                  {data.interpretation_basis.section_plan.map((item, index) => (
+                    <div key={`${index}-${item}`} className="rounded-lg bg-white/70 px-3 py-2 text-sm text-purple-800">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {data.interpretation_basis.assembly_plan && data.interpretation_basis.assembly_plan.length > 0 && (
+              <div className="mt-4">
+                <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500 mb-2">
+                  {messages.insight.auditTrail}
+                </div>
+                <div className="space-y-2">
+                  {data.interpretation_basis.assembly_plan.map((item, index) => (
+                    <div key={`${index}-${item}`} className="rounded-lg bg-white/70 px-3 py-2 text-sm text-purple-800">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="mt-2 text-xs text-gray-500">
               {messages.insight.modelVersion}{data.interpretation_basis.model_version} •
               {messages.insight.promptVersion}{data.interpretation_basis.prompt_version}

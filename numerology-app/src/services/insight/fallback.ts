@@ -12,6 +12,7 @@ import {
   FALLBACK_PROMPT_VERSION,
   SCHEMA_VERSION,
   Claim,
+  InsightPresentationBlocks,
 } from './types';
 import {
   deleteLocalTableRows,
@@ -22,6 +23,144 @@ import {
   upsertLocalTableRow,
 } from '../database';
 import { getCurrentDateISO } from '@utils/date';
+
+const PERSONAL_DAY_MEANINGS_VI: Record<number, string> = {
+  1: 'khởi đầu mới và chủ động mở đường',
+  2: 'hợp tác, lắng nghe và giữ cân bằng',
+  3: 'biểu đạt, sáng tạo và giao tiếp',
+  4: 'xây nền, tổ chức và đi từng bước vững vàng',
+  5: 'linh hoạt, thay đổi và dịch chuyển',
+  6: 'trách nhiệm, chăm sóc và gắn kết',
+  7: 'chiêm nghiệm, quan sát và lùi lại để hiểu sâu hơn',
+  8: 'tham vọng, hiệu quả và năng lực thực thi',
+  9: 'khép lại, hoàn thiện và buông điều không còn phù hợp',
+  11: 'trực giác, cảm hứng và nhận biết tinh tế',
+  22: 'xây dựng dài hạn và biến ý tưởng lớn thành cấu trúc thực tế',
+  33: 'cho đi, dẫn dắt và nâng đỡ người khác',
+};
+
+const PERSONAL_DAY_THEMES_VI: Record<number, string> = {
+  1: 'Mở đường mới',
+  2: 'Giữ nhịp hài hòa',
+  3: 'Nói ra điều mình nghĩ',
+  4: 'Giữ nền cho vững',
+  5: 'Đổi nhịp linh hoạt',
+  6: 'Nghiêng về chăm sóc',
+  7: 'Lùi lại để nhìn rõ',
+  8: 'Đẩy việc cho ra kết quả',
+  9: 'Khép lại điều đã đủ',
+  11: 'Lắng nghe trực giác',
+  22: 'Biến ý tưởng thành hình',
+  33: 'Dẫn dắt bằng sự nâng đỡ',
+};
+
+function createFallbackPresentation(
+  personalDay: number,
+  isVietnamese: boolean,
+  themeMeaningVi: string,
+  themeLabelVi: string,
+  themeMeaningEn: string,
+  themeLabelEn: string
+): InsightPresentationBlocks {
+  const label = isVietnamese ? themeLabelVi : themeLabelEn;
+  const meaning = isVietnamese ? themeMeaningVi : themeMeaningEn;
+
+  return {
+    visual_scene: {
+      atmosphere: isVietnamese
+        ? `Nhịp ${label.toLowerCase()} mở ra`
+        : `${label} sets the tone`,
+      movement: isVietnamese
+        ? `dịch chuyển quanh ${meaning}`
+        : `movement around ${meaning.toLowerCase()}`,
+      focal_point: isVietnamese
+        ? `giữ mắt ở ${meaning}`
+        : `keep the focus on ${meaning.toLowerCase()}`,
+    },
+    energy_map: [
+      {
+        label: isVietnamese ? 'Nhịp chính' : 'Primary current',
+        intensity: 4,
+        meaning: isVietnamese
+          ? `Ngày ${personalDay} thường nhấn vào ${themeMeaningVi}.`
+          : `Personal Day ${personalDay} usually emphasizes ${themeMeaningEn.toLowerCase()}.`,
+      },
+      {
+        label: isVietnamese ? 'Độ mở' : 'Openness',
+        intensity: personalDay === 4 || personalDay === 7 ? 2 : 3,
+        meaning: isVietnamese
+          ? 'Hãy xem đây là một gợi ý để quan sát nhịp của ngày, không phải một kết luận cứng.'
+          : 'Treat this as a directional reading rather than a rigid conclusion.',
+      },
+      {
+        label: isVietnamese ? 'Điểm tựa' : 'Anchor',
+        intensity: 3,
+        meaning: isVietnamese
+          ? 'Giữ một điểm tựa thực tế sẽ giúp bản đọc fallback vẫn hữu ích hơn.'
+          : 'A practical anchor will make this fallback reading more useful.',
+      },
+    ],
+    decision_compass: {
+      lean_in: isVietnamese ? `nghiêng về ${themeMeaningVi}` : `lean toward ${themeMeaningEn.toLowerCase()}`,
+      hold_steady: isVietnamese ? 'giữ kỳ vọng vừa phải' : 'keep expectations measured',
+      avoid_force: isVietnamese ? 'đừng ép mọi thứ thành kết luận lớn' : 'do not force a grand conclusion',
+    },
+    practical_guidance: [
+      {
+        area: 'micro_action',
+        title: isVietnamese ? 'Một việc nhỏ' : 'Small move',
+        suggestion: isVietnamese
+          ? `Chọn một việc rất nhỏ phản ánh nhịp ${themeLabelVi.toLowerCase()} và làm nó ngay đầu ngày.`
+          : `Pick one small action that reflects the ${themeLabelEn.toLowerCase()} tone and do it early.`,
+        timing: isVietnamese ? 'ngay đầu ngày' : 'early in the day',
+      },
+      {
+        area: 'work',
+        title: isVietnamese ? 'Trong công việc' : 'At work',
+        suggestion: isVietnamese
+          ? 'Ưu tiên một đầu việc hợp với nhịp của ngày thay vì dàn trải quá nhiều hướng cùng lúc.'
+          : 'Prioritize one task that fits the day instead of scattering energy across too many directions.',
+        timing: isVietnamese ? 'khi bắt đầu guồng việc' : 'when work begins',
+      },
+      {
+        area: 'relationships',
+        title: isVietnamese ? 'Trong quan hệ' : 'In relationships',
+        suggestion: isVietnamese
+          ? 'Nếu cần trao đổi, hãy nói ngắn gọn điều bạn đang cần thay vì đợi người khác tự đoán.'
+          : 'If a conversation matters today, state what you need plainly instead of waiting to be guessed.',
+        timing: isVietnamese ? 'trong một cuộc trao đổi ngắn' : 'in a short conversation',
+      },
+      {
+        area: 'self_regulation',
+        title: isVietnamese ? 'Giữ nhịp cho mình' : 'Regulate yourself',
+        suggestion: isVietnamese
+          ? 'Trước khi kết luận quá nhanh, dừng lại một nhịp để xem cảm giác hiện tại có đang đẩy bạn đi quá xa không.'
+          : 'Before drawing a big conclusion, pause long enough to see whether the current mood is pushing too far.',
+        timing: isVietnamese ? 'khi thấy mình bắt đầu vội' : 'when you start to rush',
+      },
+    ],
+    narrative_beats: [
+      {
+        title: isVietnamese ? 'Nhịp chính' : 'Primary rhythm',
+        summary: isVietnamese
+          ? `Ngày ${personalDay} đang gợi một nhịp xoay quanh ${themeMeaningVi}.`
+          : `Personal Day ${personalDay} points toward ${themeMeaningEn.toLowerCase()}.`,
+      },
+      {
+        title: isVietnamese ? 'Cách dùng' : 'How to use it',
+        summary: isVietnamese
+          ? 'Hãy dùng bản fallback này như một điểm soi nhanh trước khi có bản luận giải đầy đủ hơn.'
+          : 'Use this fallback as a quick orienting note until a fuller reading is available.',
+      },
+    ],
+    closing_signal: {
+      title: isVietnamese ? 'Điểm mang theo' : 'Carry this',
+      phrase: isVietnamese
+        ? `Giữ nhịp ${label.toLowerCase()} vừa đủ để quan sát ngày hôm nay rõ hơn.`
+        : `Carry the ${label.toLowerCase()} tone lightly through today.`,
+    },
+  };
+}
 
 /**
  * Retrieve cached insight from fallback cache
@@ -181,25 +320,41 @@ export async function cacheInsight(
 export function generateGenericFallback(
   personalDay: number,
   requestId: string,
-  reason: FallbackReason
+  reason: FallbackReason,
+  language: 'vi' | 'en' = 'en'
 ): InsightResponse {
   const theme = PERSONAL_DAY_THEMES[personalDay] || PERSONAL_DAY_THEMES[9];
+  const themeMeaningVi = PERSONAL_DAY_MEANINGS_VI[personalDay] || PERSONAL_DAY_MEANINGS_VI[9];
+  const themeVi = PERSONAL_DAY_THEMES_VI[personalDay] || PERSONAL_DAY_THEMES_VI[9];
+  const isVietnamese = language === 'vi';
 
   const calculatedClaim: Claim = {
     type: 'calculated',
-    text: `[Calculated] Today is Personal Day ${personalDay}.`,
+    text: isVietnamese
+      ? `[Calculated] Hôm nay là Ngày cá nhân ${personalDay}.`
+      : `[Calculated] Today is Personal Day ${personalDay}.`,
     confidence: 1.0,
     source: 'numerology_calculation',
   };
 
   const interpretedClaim: Claim = {
     type: 'interpreted',
-    text: `[Interpreted] ${theme.meaning}.`,
+    text: isVietnamese
+      ? `[Interpreted] Năng lượng hôm nay thường gợi ý ${themeMeaningVi}.`
+      : `[Interpreted] ${theme.meaning}.`,
     confidence: 0.6,
     source: 'fallback_template',
   };
 
   const now = new Date().toISOString();
+  const presentation = createFallbackPresentation(
+    personalDay,
+    isVietnamese,
+    themeMeaningVi,
+    themeVi,
+    theme.meaning,
+    theme.theme
+  );
 
   const response: InsightResponse = {
     schema_version: SCHEMA_VERSION,
@@ -207,18 +362,25 @@ export function generateGenericFallback(
     generated_at: now,
     model: 'fallback',
     insight: {
-      headline: `Your Personal Day ${personalDay} Theme`,
-      theme: theme.theme,
+      headline: isVietnamese
+        ? `Ngày ${personalDay} gợi nhắc bạn ${themeMeaningVi}`
+        : `Your Personal Day ${personalDay} Theme`,
+      theme: isVietnamese ? themeVi : theme.theme,
       layers: {
         quick: {
-          content: `[Calculated] Today is Personal Day ${personalDay}. [Interpreted] This day often supports ${theme.meaning.toLowerCase()}.`,
+          content: isVietnamese
+            ? `[Calculated] Hôm nay là Ngày cá nhân ${personalDay}. [Interpreted] Nhịp ngày này thường gợi bạn ${themeMeaningVi}.`
+            : `[Calculated] Today is Personal Day ${personalDay}. [Interpreted] This day often supports ${theme.meaning.toLowerCase()}.`,
           claims: [calculatedClaim, interpretedClaim],
         },
         standard: {
-          content: `[Calculated] Today is Personal Day ${personalDay}.\n\n[Interpreted] Personal Day ${personalDay} is associated with ${theme.meaning.toLowerCase()}. You might consider reviewing any relevant activities or projects today.\n\nNote: A more personalized insight will be available tomorrow.`,
+          content: isVietnamese
+            ? `[Calculated] Hôm nay là Ngày cá nhân ${personalDay}.\n\n[Interpreted] Nhịp ngày này thường gắn với ${themeMeaningVi}. Bạn có thể ưu tiên những việc hợp với nhịp đó, đồng thời giữ kỳ vọng vừa phải để quan sát xem ngày hôm nay mở ra theo hướng nào.\n\nLưu ý: Khi kết nối AI sẵn sàng, app sẽ tạo bản luận giải cá nhân hóa đầy đủ hơn cho bạn.`
+            : `[Calculated] Today is Personal Day ${personalDay}.\n\n[Interpreted] Personal Day ${personalDay} is associated with ${theme.meaning.toLowerCase()}. You might consider reviewing any relevant activities or projects today.\n\nNote: A more personalized insight will be available tomorrow.`,
           claims: [calculatedClaim, interpretedClaim],
         },
       },
+      presentation,
       confidence: {
         overall: 0.7,
         breakdown: {
@@ -260,7 +422,8 @@ export async function getFallbackInsight(
   userId: string,
   personalDay: number,
   requestId: string,
-  reason: FallbackReason
+  reason: FallbackReason,
+  language: 'vi' | 'en' = 'en'
 ): Promise<InsightResponse> {
   logger.info('Initiating fallback pipeline', {
     user_id: userId,
@@ -288,7 +451,7 @@ export async function getFallbackInsight(
     personal_day: personalDay,
   });
 
-  return generateGenericFallback(personalDay, requestId, reason);
+  return generateGenericFallback(personalDay, requestId, reason, language);
 }
 
 /**

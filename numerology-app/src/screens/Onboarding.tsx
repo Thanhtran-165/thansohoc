@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '@stores/userStore';
 import { useSettingsStore } from '@stores/settingsStore';
-import { StylePreference, InsightLength, Language } from '@/types';
+import { StylePreference, Language } from '@/types';
 import messages from '@localization';
 import { trackEvent } from '@services/analytics';
 
@@ -17,7 +17,6 @@ interface FormData {
   full_name: string;
   date_of_birth: string;
   style_preference: StylePreference;
-  insight_length: InsightLength;
   language: Language;
 }
 
@@ -40,7 +39,6 @@ export default function Onboarding() {
     full_name: '',
     date_of_birth: '',
     style_preference: 'practical',
-    insight_length: 'detailed',
     language: 'vi',
   });
 
@@ -52,14 +50,16 @@ export default function Onboarding() {
     } else if (currentStep === 'preferences') {
       setIsLoading(true);
       try {
-        const profile = await createProfile(formData);
+        const profile = await createProfile({
+          ...formData,
+          insight_length: 'detailed',
+        });
         await createNotificationPreferences(profile.id);
         await completeOnboarding();
         await trackEvent('onboarding_completed', {
           userId: profile.id,
           payload: {
             style_preference: formData.style_preference,
-            insight_length: formData.insight_length,
           },
         });
         setCurrentStep('complete');
@@ -268,44 +268,6 @@ function PreferencesStep({
               <div className="text-xs text-gray-500">{style.description}</div>
             </button>
           ))}
-        </div>
-      </div>
-
-      <div className="space-y-4 mb-6">
-        <label className="block text-sm font-medium text-gray-700">
-          {messages.onboarding.preferences.insightLength}
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => setFormData({ ...formData, insight_length: 'brief' })}
-            className={`p-4 rounded-lg border-2 text-left transition-colors ${
-              formData.insight_length === 'brief'
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            <div className="font-medium text-gray-900">
-              {messages.onboarding.preferences.lengths.brief.label}
-            </div>
-            <div className="text-xs text-gray-500">
-              {messages.onboarding.preferences.lengths.brief.description}
-            </div>
-          </button>
-          <button
-            onClick={() => setFormData({ ...formData, insight_length: 'detailed' })}
-            className={`p-4 rounded-lg border-2 text-left transition-colors ${
-              formData.insight_length === 'detailed'
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            <div className="font-medium text-gray-900">
-              {messages.onboarding.preferences.lengths.detailed.label}
-            </div>
-            <div className="text-xs text-gray-500">
-              {messages.onboarding.preferences.lengths.detailed.description}
-            </div>
-          </button>
         </div>
       </div>
 

@@ -2,6 +2,8 @@
 
 // Valid numerology numbers (1-9 or master numbers 11, 22, 33)
 export type NumerologyNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 22 | 33;
+export type ChallengeNumber = 0 | NumerologyNumber;
+export type KarmicDebtNumber = 13 | 14 | 16 | 19;
 
 export interface NumerologyProfile {
   id: string;
@@ -23,6 +25,40 @@ export interface CyclicNumbers {
   personal_day: NumerologyNumber;
 }
 
+export interface LifeCyclePeriod<TNumber extends number = number> {
+  cycle: 1 | 2 | 3 | 4;
+  number: TNumber;
+  from_age: number;
+  to_age: number | null;
+}
+
+export interface NumerologyMethodology {
+  school: 'pythagorean';
+  reduction_rule: 'preserve_11_22_33';
+  modules_used: Array<
+    'core_numbers' |
+    'personal_cycles' |
+    'pinnacles' |
+    'challenges' |
+    'karmic_lessons' |
+    'karmic_debt' |
+    'hidden_passion' |
+    'balance'
+  >;
+}
+
+export interface AdvancedNumerologyContext {
+  methodology: NumerologyMethodology;
+  balance_number: NumerologyNumber;
+  hidden_passion_numbers: NumerologyNumber[];
+  karmic_lessons: NumerologyNumber[];
+  karmic_debt_numbers: KarmicDebtNumber[];
+  pinnacles: LifeCyclePeriod<NumerologyNumber>[];
+  challenges: LifeCyclePeriod<ChallengeNumber>[];
+  current_pinnacle: LifeCyclePeriod<NumerologyNumber>;
+  current_challenge: LifeCyclePeriod<ChallengeNumber>;
+}
+
 // Full numerology context for a given date
 export interface NumerologyContext extends CyclicNumbers {
   core: {
@@ -33,6 +69,7 @@ export interface NumerologyContext extends CyclicNumbers {
     birthday_number: NumerologyNumber;
     maturity_number: NumerologyNumber | null;
   };
+  advanced: AdvancedNumerologyContext;
 }
 
 // Letter to number mapping in numerology

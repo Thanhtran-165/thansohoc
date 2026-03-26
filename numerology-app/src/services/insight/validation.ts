@@ -269,10 +269,10 @@ export function validateInsight(response: unknown, requestId: string): Validatio
     });
   } else {
     const wordCount = (insight.headline as string).split(/\s+/).length;
-    if (wordCount < 5 || wordCount > 10) {
+    if (wordCount < 3) {
       result.warnings.push({
         field: 'insight.headline',
-        message: 'Headline should be 5-10 words',
+        message: 'Headline may be too short to carry enough meaning',
         value: wordCount,
       });
     }

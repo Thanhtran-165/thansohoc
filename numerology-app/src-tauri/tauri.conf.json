@@ -7,7 +7,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "Numerology Intelligence",
+    "productName": "Thần Số Học",
     "version": "0.1.0"
   },
   "tauri": {
@@ -46,7 +46,7 @@
         "icons/icon.ico"
       ],
       "identifier": "com.numerology-intelligence.app",
-      "longDescription": "Personal Numerology Intelligence System - Daily insights based on numerology",
+      "longDescription": "Ứng dụng báo cáo thần số học hằng ngày dành riêng cho bạn",
       "macOS": {
         "entitlements": null,
         "exceptionDomain": "",
@@ -55,7 +55,7 @@
         "signingIdentity": null
       },
       "resources": [],
-      "shortDescription": "Numerology Intelligence App",
+      "shortDescription": "Ứng dụng thần số học hằng ngày",
       "targets": "all",
       "windows": {
         "certificateThumbprint": null,
@@ -76,7 +76,7 @@
         "minHeight": 600,
         "minWidth": 800,
         "resizable": true,
-        "title": "Numerology Intelligence",
+        "title": "Thần Số Học",
         "width": 1200,
         "center": true
       }

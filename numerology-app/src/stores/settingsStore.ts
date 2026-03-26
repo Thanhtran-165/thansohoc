@@ -33,6 +33,33 @@ function saveNotificationsToStorage(prefs: NotificationPreferences): void {
   localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(prefs));
 }
 
+function shouldMigrateLegacyStartupPreference(prefs: NotificationPreferences): boolean {
+  return (
+    prefs.launch_on_startup === false &&
+    prefs.morning_insight_enabled === (DEFAULT_NOTIFICATION_PREFERENCES.morning_insight_enabled ?? true) &&
+    prefs.morning_insight_time === (DEFAULT_NOTIFICATION_PREFERENCES.morning_insight_time ?? '06:30:00') &&
+    prefs.evening_journal_enabled === (DEFAULT_NOTIFICATION_PREFERENCES.evening_journal_enabled ?? true) &&
+    prefs.evening_journal_time === (DEFAULT_NOTIFICATION_PREFERENCES.evening_journal_time ?? '21:00:00') &&
+    prefs.quiet_hours_enabled === (DEFAULT_NOTIFICATION_PREFERENCES.quiet_hours_enabled ?? false) &&
+    (prefs.quiet_hours_start ?? null) === (DEFAULT_NOTIFICATION_PREFERENCES.quiet_hours_start ?? null) &&
+    (prefs.quiet_hours_end ?? null) === (DEFAULT_NOTIFICATION_PREFERENCES.quiet_hours_end ?? null) &&
+    prefs.sound_enabled === (DEFAULT_NOTIFICATION_PREFERENCES.sound_enabled ?? true) &&
+    prefs.created_at === prefs.updated_at
+  );
+}
+
+function normalizeNotificationPreferences(prefs: NotificationPreferences): NotificationPreferences {
+  if (!shouldMigrateLegacyStartupPreference(prefs)) {
+    return prefs;
+  }
+
+  return {
+    ...prefs,
+    launch_on_startup: true,
+    updated_at: getCurrentTimestamp(),
+  };
+}
+
 interface SettingsState {
   // State
   notifications: NotificationPreferences | null;
@@ -62,6 +89,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
       if (isLocalStorageMode()) {
         prefs = getNotificationsFromStorage();
+        if (prefs) {
+          const normalizedPrefs = normalizeNotificationPreferences(prefs);
+          if (normalizedPrefs !== prefs) {
+            saveNotificationsToStorage(normalizedPrefs);
+          }
+          prefs = normalizedPrefs;
+        }
       }
 
       set({ notifications: prefs, isLoading: false });
@@ -86,7 +120,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       quiet_hours_enabled: DEFAULT_NOTIFICATION_PREFERENCES.quiet_hours_enabled ?? false,
       quiet_hours_start: DEFAULT_NOTIFICATION_PREFERENCES.quiet_hours_start ?? null,
       quiet_hours_end: DEFAULT_NOTIFICATION_PREFERENCES.quiet_hours_end ?? null,
-      launch_on_startup: DEFAULT_NOTIFICATION_PREFERENCES.launch_on_startup ?? false,
+      launch_on_startup: DEFAULT_NOTIFICATION_PREFERENCES.launch_on_startup ?? true,
       sound_enabled: DEFAULT_NOTIFICATION_PREFERENCES.sound_enabled ?? true,
       created_at: now,
       updated_at: now,

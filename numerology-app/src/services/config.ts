@@ -42,11 +42,11 @@ const DEFAULT_CONFIG: AppConfig = {
     apiKey: '',
     baseUrl: 'https://api.deepseek.com/v1',
     model: 'deepseek-reasoner',
-    timeout: 10000, // 10 seconds as per PRD
+    timeout: 90000, // 90 seconds for multi-stage generation
     maxRetries: 3,
   },
   app: {
-    language: 'en',
+    language: 'vi',
     logLevel: 'info',
     dataRetentionDays: {
       insights: 90,

@@ -50,6 +50,6 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: Omit<CreateNotificationPreference
   quiet_hours_enabled: false,
   quiet_hours_start: null,
   quiet_hours_end: null,
-  launch_on_startup: false, // NOT default as per PRD
+  launch_on_startup: true,
   sound_enabled: true,
 };

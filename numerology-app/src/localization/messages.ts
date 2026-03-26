@@ -17,7 +17,6 @@ export const messages = {
   // Navigation
   nav: {
     dashboard: 'Báo cáo hôm nay',
-    history: 'Thư viện báo cáo',
     profile: 'Hồ sơ',
     settings: 'Cài đặt',
     skipToContent: 'Đi đến nội dung chính',
@@ -44,7 +43,6 @@ export const messages = {
     saveSettings: 'Lưu cài đặt',
     resetToDefault: 'Khôi phục mặc định',
     removeApiKey: 'Xóa khóa API',
-    viewHistory: 'Mở thư viện báo cáo',
   },
 
   // Greetings
@@ -95,7 +93,7 @@ export const messages = {
     },
     complete: {
       title: 'Đã hoàn tất!',
-      description: 'Hồ sơ của bạn đã được tạo. Hãy tạo nhận định đầu tiên cho ngày hôm nay.',
+      description: 'Hồ sơ của bạn đã sẵn sàng. Bạn có thể xem báo cáo đầu tiên của hôm nay.',
       button: 'Vào Trang chủ',
     },
   },
@@ -103,22 +101,20 @@ export const messages = {
   // Dashboard screen
   dashboard: {
     title: 'Báo cáo hôm nay',
-    insightSubtitle: 'Bản đọc thần số học dành riêng cho ngày hiện tại',
-    todaysInsight: 'Nhận định hôm nay',
+    insightSubtitle: 'Phần luận giải dành cho hôm nay',
+    todaysInsight: 'Luận giải hôm nay',
     quickJournal: 'Ghi chú riêng',
     yourNumbers: 'Các con số của bạn',
     dailyReport: 'Báo cáo thần số học hôm nay',
-    dailyReportDescription: 'App tự chuẩn bị bản báo cáo cho ngày hôm nay để bạn mở ra là đọc ngay, không cần nhập dữ liệu hằng ngày.',
-    executiveSummary: 'Tóm tắt nhanh',
-    detailedReport: 'Báo cáo chi tiết',
+    executiveSummary: 'Điểm chính hôm nay',
+    detailedReport: 'Phần luận giải',
     reflectionPrompt: 'Nếu muốn, bạn có thể lưu lại một ghi chú riêng sau khi đọc xong. Đây chỉ là bước phụ, không ảnh hưởng đến báo cáo ngày mai.',
-    generatedForToday: 'Bản tin dành cho hôm nay',
+    generatedForToday: 'Điểm chính cho hôm nay',
     readingModes: 'Chế độ đọc',
-    reportGuidance: 'Nhịp đọc của bạn',
-    archiveLink: 'Xem thư viện báo cáo',
+    reportGuidance: 'Điểm chính hôm nay',
     noInsight: {
-      title: 'Chưa có nhận định',
-      description: 'Nhận định hàng ngày sẽ hiển thị ở đây sau khi được tạo.',
+      title: 'Chưa có báo cáo',
+      description: 'Báo cáo hôm nay sẽ hiện ở đây sau khi được tạo xong.',
     },
     journal: {
       mood: 'Tâm trạng',
@@ -132,45 +128,8 @@ export const messages = {
     },
     practice: {
       streak: 'Chuỗi ngày có báo cáo',
-      weeklyCompletion: 'Độ phủ 7 ngày',
+      weeklyCompletion: 'Tần suất 7 ngày',
       dominantEmotion: 'Chủ đề nổi bật',
-    },
-  },
-
-  history: {
-    title: 'Thư viện báo cáo',
-    subtitle: 'Xem lại các bản báo cáo thần số học đã được tạo cho từng ngày, cùng nhịp đọc và chủ đề lặp lại.',
-    weeklyRecap: 'Tóm tắt 7 ngày gần nhất',
-    timeline: 'Các báo cáo gần đây',
-    last21Days: '21 ngày gần nhất',
-    empty: 'Chưa có báo cáo nào trong thư viện. Báo cáo sẽ xuất hiện ở đây sau khi được tạo.',
-    cards: {
-      currentStreak: 'Chuỗi ngày có báo cáo',
-      currentStreakHelper: 'Số ngày liên tiếp app đã chuẩn bị báo cáo cho bạn',
-      weeklyCompletion: 'Độ phủ báo cáo 7 ngày',
-      daysActive: 'báo cáo đã có',
-      bestStreak: 'Chuỗi dài nhất',
-      bestStreakHelper: 'Số ngày liên tiếp app từng duy trì được thư viện báo cáo',
-      reportsRead: 'Tỷ lệ đã mở',
-      reportsReadHelper: 'Tỷ lệ báo cáo đã được bạn mở trong 7 ngày gần nhất',
-    },
-    recap: {
-      reportsPublished: 'Báo cáo đã có',
-      reportsRead: 'Báo cáo đã mở',
-      dominantTheme: 'Chủ đề chính',
-      latestHeadline: 'Tiêu đề gần nhất',
-      recurringThemes: 'Chủ đề lặp lại',
-      noThemes: 'Chưa có đủ insight để rút ra chủ đề lặp lại.',
-    },
-    engagement: {
-      title: 'Nhịp đọc báo cáo',
-    },
-    badges: {
-      insight: 'Đã tạo báo cáo',
-      journal: 'Có ghi chú riêng',
-      read: 'Đã mở',
-      unread: 'Chưa mở',
-      fallback: 'Bản dự phòng',
     },
   },
 
@@ -433,9 +392,9 @@ export const messages = {
   insight: {
     whyThis: 'Tại sao nhận định này?',
     dataSources: 'Nguồn dữ liệu',
-    calculatedClaims: 'Các nhận định được tính',
-    interpretationBasis: 'Cơ sở diễn giải',
-    confidenceBreakdown: 'Phân tích độ tin cậy',
+    calculatedClaims: 'Phần dựa trên các con số',
+    interpretationBasis: 'Cách luận giải',
+    confidenceBreakdown: 'Mức độ chắc chắn',
     // InsightCard layers
     layers: {
       quick: 'Nhanh',
@@ -445,8 +404,7 @@ export const messages = {
     },
     cached: 'Đã lưu',
     personalDay: 'Ngày cá nhân',
-    questionsToExplore: 'Câu hỏi để khám phá',
-    overallConfidence: 'Độ tin cậy tổng thể',
+    overallConfidence: 'Mức độ chắc chắn',
     feedbackReceived: 'Đã nhận phản hồi',
     // WhyThisInsightModal
     whyThisTitle: 'Tại sao nhận định này?',
@@ -459,10 +417,17 @@ export const messages = {
     inputs: 'Đầu vào',
     style: 'Phong cách',
     context: 'Bối cảnh',
+    dominantAxis: 'Trục đọc',
+    pattern: 'Pattern',
+    reportArchetype: 'Archetype',
+    conflictGrammar: 'Dạng giằng co',
+    hierarchy: 'Thứ bậc ảnh hưởng',
+    reportStructure: 'Khung báo cáo',
+    auditTrail: 'Dấu vết dựng báo cáo',
     modelVersion: 'Mô hình v',
     promptVersion: 'Prompt v',
     dataQuality: 'Chất lượng dữ liệu',
-    interpretationConfidence: 'Độ tin cậy diễn giải',
+    interpretationConfidence: 'Độ chắc của phần diễn giải',
     overall: 'Tổng thể',
     summary: 'Tóm tắt',
   },

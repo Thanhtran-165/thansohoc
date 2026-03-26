@@ -10,6 +10,7 @@ import { DailyInsight, CreateInsightFeedbackInput, UserProfile } from '@/types';
 import { dbQuery } from '@services/database';
 import { storeInsightFeedback } from '@services/insight/persistence';
 import { InsightService } from '@services/insight';
+import { PROMPT_VERSION } from '@services/insight/types';
 import { useUserStore } from './userStore';
 import { getCurrentDateISO } from '@utils/date';
 
@@ -27,8 +28,50 @@ interface InsightState {
   clearError: () => void;
 }
 
+function shouldRegenerateExistingInsight(
+  insight: DailyInsight,
+  profile: UserProfile
+): boolean {
+  const quickContent = typeof insight.layers === 'string'
+    ? JSON.parse(insight.layers).quick?.content ?? ''
+    : insight.layers.quick?.content ?? '';
+
+  const hasLegacyEnglishFallback =
+    profile.language === 'vi' &&
+    (
+      insight.headline.startsWith('Your Personal Day') ||
+      String(quickContent).includes('Today is Personal Day')
+    );
+
+  const hasInvalidCycleNumbers =
+    insight.personal_day === 0 || insight.personal_month === 0 || insight.personal_year === 0;
+
+  const hasMissingDeepLayer =
+    !(typeof insight.layers === 'string'
+      ? JSON.parse(insight.layers).deep
+      : insight.layers.deep);
+
+  const metadata = typeof insight.metadata === 'string'
+    ? JSON.parse(insight.metadata)
+    : insight.metadata;
+
+  const hasOutdatedMethodology =
+    (metadata as { prompt_version?: string } | null)?.prompt_version !== PROMPT_VERSION;
+
+  return Boolean(
+    hasInvalidCycleNumbers ||
+    (insight.is_fallback && hasLegacyEnglishFallback) ||
+    hasMissingDeepLayer ||
+    hasOutdatedMethodology
+  );
+}
+
 function parseInsightRecord(insight: DailyInsight | null): DailyInsight | null {
   if (!insight) return null;
+
+  const metadata = typeof insight.metadata === 'string'
+    ? JSON.parse(insight.metadata)
+    : insight.metadata;
 
   insight.layers = typeof insight.layers === 'string'
     ? JSON.parse(insight.layers)
@@ -36,9 +79,14 @@ function parseInsightRecord(insight: DailyInsight | null): DailyInsight | null {
   insight.confidence = typeof insight.confidence === 'string'
     ? JSON.parse(insight.confidence)
     : insight.confidence;
-  insight.metadata = typeof insight.metadata === 'string'
-    ? JSON.parse(insight.metadata)
-    : insight.metadata;
+  insight.metadata = metadata;
+  const fallbackValue = insight.is_fallback as unknown;
+  insight.is_fallback =
+    fallbackValue === true ||
+    fallbackValue === 1 ||
+    fallbackValue === '1';
+  insight.presentation = insight.presentation
+    ?? (metadata as { presentation?: DailyInsight['presentation'] } | null)?.presentation;
 
   return insight;
 }
@@ -52,6 +100,9 @@ async function generateAndLoadInsight(
     userId: profile.id,
     fullName: profile.full_name,
     dateOfBirth: profile.date_of_birth,
+    stylePreference: profile.style_preference,
+    insightLength: 'detailed',
+    language: profile.language === 'en' ? 'vi' : profile.language,
     force,
     date: getCurrentDateISO(),
   });
@@ -93,11 +144,12 @@ export const useInsightStore = create<InsightState>((set, get) => ({
 
     try {
       await get().loadTodayInsight(profile.id);
-      if (get().todayInsight) {
+      const existingInsight = get().todayInsight;
+      if (existingInsight && !shouldRegenerateExistingInsight(existingInsight, profile)) {
         return;
       }
 
-      const generatedInsight = await generateAndLoadInsight(profile, false);
+      const generatedInsight = await generateAndLoadInsight(profile, Boolean(existingInsight));
       set({ todayInsight: generatedInsight, isLoading: false });
     } catch (error) {
       console.error('Failed to ensure today insight:', error);

@@ -5,7 +5,16 @@
  * @module numerology
  */
 
-import { NumerologyNumber, NumerologyProfile, NumerologyContext, CyclicNumbers } from '@/types';
+import {
+  AdvancedNumerologyContext,
+  ChallengeNumber,
+  CyclicNumbers,
+  KarmicDebtNumber,
+  LifeCyclePeriod,
+  NumerologyContext,
+  NumerologyNumber,
+  NumerologyProfile,
+} from '@/types';
 import {
   reduceToSingleDigit,
   sumDigits,
@@ -36,6 +45,15 @@ import {
   calculatePersonalDay,
   calculateCyclicNumbers,
 } from './cyclic';
+import {
+  calculateAdvancedNumerologyContext,
+  calculateBalanceNumber,
+  calculateChallenges,
+  calculateHiddenPassionNumbers,
+  calculateKarmicDebtNumbers,
+  calculateKarmicLessons,
+  calculatePinnacles,
+} from './advanced';
 
 /**
  * Get full numerology profile with core numbers and today's cyclic numbers
@@ -43,15 +61,17 @@ import {
 export function getFullNumerologyProfile(
   fullName: string,
   dateOfBirth: string
-): CoreNumerologyResult & CyclicNumbers {
+): CoreNumerologyResult & CyclicNumbers & { advanced: AdvancedNumerologyContext } {
   const coreNumbers = calculateCoreNumbers(fullName, dateOfBirth);
   const cyclicNumbers = calculateCyclicNumbers(dateOfBirth, new Date());
+  const advanced = calculateAdvancedNumerologyContext(fullName, dateOfBirth, new Date());
 
   return {
     ...coreNumbers,
     personal_year: cyclicNumbers.personal_year,
     personal_month: cyclicNumbers.personal_month,
     personal_day: cyclicNumbers.personal_day,
+    advanced,
   };
 }
 
@@ -78,6 +98,7 @@ export function calculateNumerologyContext(
     personal_year: cyclicNumbers.personal_year,
     personal_month: cyclicNumbers.personal_month,
     personal_day: cyclicNumbers.personal_day,
+    advanced: calculateAdvancedNumerologyContext(fullName, dateOfBirth, targetDate),
   };
 }
 
@@ -119,7 +140,23 @@ export {
   calculatePersonalMonth,
   calculatePersonalDay,
   calculateCyclicNumbers,
+  calculateBalanceNumber,
+  calculateKarmicLessons,
+  calculateHiddenPassionNumbers,
+  calculateKarmicDebtNumbers,
+  calculatePinnacles,
+  calculateChallenges,
+  calculateAdvancedNumerologyContext,
 };
 
 // Re-export types
-export type { NumerologyNumber, NumerologyProfile, NumerologyContext, CyclicNumbers };
+export type {
+  AdvancedNumerologyContext,
+  ChallengeNumber,
+  CyclicNumbers,
+  KarmicDebtNumber,
+  LifeCyclePeriod,
+  NumerologyContext,
+  NumerologyNumber,
+  NumerologyProfile,
+};

@@ -46,6 +46,38 @@ export interface InsightMetadata {
   processing_time_ms: number;
 }
 
+export interface InsightPresentationBlocks {
+  visual_scene: {
+    atmosphere: string;
+    movement: string;
+    focal_point: string;
+  };
+  energy_map: Array<{
+    label: string;
+    intensity: 1 | 2 | 3 | 4 | 5;
+    meaning: string;
+  }>;
+  decision_compass: {
+    lean_in: string;
+    hold_steady: string;
+    avoid_force: string;
+  };
+  practical_guidance: Array<{
+    area: 'micro_action' | 'work' | 'relationships' | 'self_regulation';
+    title: string;
+    suggestion: string;
+    timing: string;
+  }>;
+  narrative_beats: Array<{
+    title: string;
+    summary: string;
+  }>;
+  closing_signal: {
+    title: string;
+    phrase: string;
+  };
+}
+
 export type FallbackReason = 'timeout' | 'error' | 'no_cache' | 'invalid_response';
 
 export interface DailyInsight {
@@ -59,6 +91,7 @@ export interface DailyInsight {
   personal_month: number;
   personal_year: number;
   layers: InsightLayers;
+  presentation?: InsightPresentationBlocks;
   confidence: InsightConfidence;
   metadata: InsightMetadata;
   is_fallback: boolean;
@@ -86,6 +119,13 @@ export interface WhyThisInsight {
     context: string[];
     numerology_version: string;
     prompt_version: string;
+    methodology_school?: string;
+    dominant_axis?: string;
+    pattern?: string;
+    report_archetype?: string;
+    conflict_grammar?: string;
+    ruling_stack?: string[];
+    section_plan?: string[];
   };
   confidence_breakdown: {
     data_quality: number;

@@ -7,6 +7,7 @@
 import { logger } from '../../utils/logger';
 import {
   deleteLocalTableRows,
+  dbQuery,
   findLocalTableRow,
   getDatabase,
   getLocalTableRows,
@@ -14,6 +15,153 @@ import {
   upsertLocalTableRow,
 } from '../database';
 import { InsightResponse, WhyThisInsight, FallbackReason, SCHEMA_VERSION } from './types';
+import { calculateNumerologyContext } from '../numerology';
+import { createInterpretationBlueprint } from './interpretationEngine';
+import { UserProfile } from '@/types';
+
+type DailyInsightRow = {
+  id: string;
+  user_id: string;
+  date: string;
+  request_id: string;
+  headline: string;
+  theme: string;
+  personal_day: number;
+  personal_month: number;
+  personal_year: number;
+  layers: string;
+  confidence: string;
+  metadata: string;
+  is_fallback: number;
+  fallback_reason: FallbackReason | null;
+  generated_at: string;
+  viewed_at: string | null;
+};
+
+function calculateProfileCompleteness(profile: UserProfile): number {
+  const checks = [
+    Boolean(profile.full_name?.trim()),
+    Boolean(profile.date_of_birth),
+    Boolean(profile.style_preference),
+    Boolean(profile.language),
+    Boolean(profile.onboarding_completed),
+  ];
+
+  return checks.filter(Boolean).length / checks.length;
+}
+
+function buildSyntheticWhyThisInsight(
+  insightRow: DailyInsightRow,
+  profile: UserProfile
+): WhyThisInsight {
+  const numerology = calculateNumerologyContext(
+    profile.full_name,
+    profile.date_of_birth,
+    insightRow.date
+  );
+
+  const blueprint = createInterpretationBlueprint({
+    personal_day: numerology.personal_day,
+    personal_month: numerology.personal_month,
+    personal_year: numerology.personal_year,
+    life_path: numerology.core.life_path,
+    destiny_number: numerology.core.destiny_number,
+    soul_urge: numerology.core.soul_urge,
+    birthday_number: numerology.core.birthday_number,
+    advanced: numerology.advanced,
+  });
+
+  const metadata = JSON.parse(insightRow.metadata || '{}') as {
+    model?: string;
+    prompt_version?: string;
+  };
+  const confidence = JSON.parse(insightRow.confidence || '{}') as {
+    overall?: number;
+    breakdown?: {
+      interpreted?: number;
+    };
+  };
+
+  return {
+    id: `synthetic-${insightRow.id}`,
+    insight_id: insightRow.id,
+    request_id: insightRow.request_id,
+    data_sources: {
+      profile_completeness: calculateProfileCompleteness(profile),
+      data_available: [
+        'core_numbers',
+        'personal_cycles',
+        'advanced_context',
+        'interpretation_blueprint',
+      ],
+    },
+    calculated_claims: [
+      {
+        claim: `Ngày cá nhân hôm nay là ${numerology.personal_day}.`,
+        formula: 'personal_month + reduced(target_day)',
+        inputs: {
+          personal_month: numerology.personal_month,
+          target_day: Number(insightRow.date.split('-')[2]),
+        },
+      },
+      {
+        claim: `Tháng cá nhân hiện tại là ${numerology.personal_month}.`,
+        formula: 'personal_year + target_month',
+        inputs: {
+          personal_year: numerology.personal_year,
+          target_month: Number(insightRow.date.split('-')[1]),
+        },
+      },
+      {
+        claim: `Năm cá nhân của bạn là ${numerology.personal_year}.`,
+        formula: 'reduced(birth_day + birth_month + target_year)',
+        inputs: {
+          target_year: Number(insightRow.date.split('-')[0]),
+        },
+      },
+    ],
+    interpretation_basis: {
+      style_preference: profile.style_preference,
+      numerology_context: [
+        `Trục đọc: ${blueprint.dominant_axis.name}`,
+        `Pattern: ${blueprint.pattern.label}`,
+        `Archetype: ${blueprint.report_archetype.label}`,
+        blueprint.conflict_grammar.summary,
+      ],
+      model_version: metadata.model || 'unknown',
+      prompt_version: metadata.prompt_version || 'unknown',
+      methodology_school: numerology.advanced.methodology.school,
+      dominant_axis: blueprint.dominant_axis.name,
+      pattern: blueprint.pattern.label,
+      report_archetype: blueprint.report_archetype.label,
+      conflict_grammar: blueprint.conflict_grammar.summary,
+      ruling_stack: blueprint.methodology_trace.ruling_stack,
+      section_plan: blueprint.section_plan.map((section) => section.objective),
+      assembly_plan: blueprint.assembly_plan.map(
+        (paragraph) => `${paragraph.layer}.${paragraph.order}: ${paragraph.intent}`
+      ),
+    },
+    confidence_breakdown: {
+      data: 1,
+      interpretation: confidence.breakdown?.interpreted || 0.7,
+      overall: confidence.overall || 0.8,
+    },
+    explanation: [
+      `Báo cáo này được dựng theo trục "${blueprint.dominant_axis.name}".`,
+      `Lực mở đầu của ngày là ${blueprint.primary_force.label.toLowerCase()}, còn lớp nền gần nhất là ${blueprint.supporting_forces[0]?.label.toLowerCase() ?? 'nhịp nền hiện tại'}.`,
+      `App đang đọc hôm nay theo archetype "${blueprint.report_archetype.label}", nên phần diễn giải được tổ chức theo thứ tự cố định: mở nhịp chính, gọi tên ma sát, rồi mới đi tới cách vận dụng và lớp sâu hơn.`,
+      `Điểm cần giữ nhất là ${blueprint.conflict_grammar.balancing_move.toLowerCase()}.`,
+    ].join(' '),
+    generated_at: new Date().toISOString(),
+  };
+}
+
+function buildStoredMetadata(insight: InsightResponse) {
+  return {
+    ...insight.metadata,
+    presentation: insight.insight.presentation ?? null,
+  };
+}
 
 /**
  * Store daily insight in database
@@ -45,7 +193,7 @@ export async function storeDailyInsight(
         personal_year: insight.insight.personal_year || 0,
         layers: JSON.stringify(insight.insight.layers),
         confidence: JSON.stringify(insight.insight.confidence),
-        metadata: JSON.stringify(insight.metadata),
+        metadata: JSON.stringify(buildStoredMetadata(insight)),
         is_fallback: insight.is_fallback ? 1 : 0,
         fallback_reason: insight.fallback_reason || null,
         generated_at: insight.generated_at,
@@ -74,7 +222,7 @@ export async function storeDailyInsight(
         insight.insight.theme,
         JSON.stringify(insight.insight.layers),
         JSON.stringify(insight.insight.confidence),
-        JSON.stringify(insight.metadata),
+        JSON.stringify(buildStoredMetadata(insight)),
         insight.is_fallback ? 1 : 0,
         insight.fallback_reason || null,
         insight.generated_at,
@@ -106,7 +254,7 @@ export async function storeDailyInsight(
         insight.insight.personal_year || 0,
         JSON.stringify(insight.insight.layers),
         JSON.stringify(insight.insight.confidence),
-        JSON.stringify(insight.metadata),
+        JSON.stringify(buildStoredMetadata(insight)),
         insight.is_fallback ? 1 : 0,
         insight.fallback_reason || null,
         insight.generated_at
@@ -317,7 +465,25 @@ export async function getWhyThisInsight(
       );
 
       if (!row) {
-        return null;
+        const insightRow = dbQuery.get<DailyInsightRow>(
+          'SELECT * FROM daily_insights WHERE id = ?',
+          [insightId]
+        );
+        if (!insightRow) {
+          return null;
+        }
+
+        const profile = dbQuery.get<UserProfile>(
+          'SELECT * FROM user_profiles WHERE id = ?',
+          [insightRow.user_id]
+        );
+        if (!profile) {
+          return null;
+        }
+
+        const synthetic = buildSyntheticWhyThisInsight(insightRow, profile);
+        await storeWhyThisInsight(profile.id, insightId, synthetic);
+        return synthetic;
       }
 
       return {
@@ -340,7 +506,25 @@ export async function getWhyThisInsight(
       .get(insightId) as Record<string, unknown> | undefined;
 
     if (!row) {
-      return null;
+      const insightRow = dbQuery.get<DailyInsightRow>(
+        'SELECT * FROM daily_insights WHERE id = ?',
+        [insightId]
+      );
+      if (!insightRow) {
+        return null;
+      }
+
+      const profile = dbQuery.get<UserProfile>(
+        'SELECT * FROM user_profiles WHERE id = ?',
+        [insightRow.user_id]
+      );
+      if (!profile) {
+        return null;
+      }
+
+      const synthetic = buildSyntheticWhyThisInsight(insightRow, profile);
+      await storeWhyThisInsight(profile.id, insightId, synthetic);
+      return synthetic;
     }
 
     const whyThis: WhyThisInsight = {
@@ -361,7 +545,24 @@ export async function getWhyThisInsight(
       insight_id: insightId,
       error: error instanceof Error ? error.message : String(error),
     });
-    return null;
+
+    const insightRow = dbQuery.get<DailyInsightRow>(
+      'SELECT * FROM daily_insights WHERE id = ?',
+      [insightId]
+    );
+    if (!insightRow) {
+      return null;
+    }
+
+    const profile = dbQuery.get<UserProfile>(
+      'SELECT * FROM user_profiles WHERE id = ?',
+      [insightRow.user_id]
+    );
+    if (!profile) {
+      return null;
+    }
+
+    return buildSyntheticWhyThisInsight(insightRow, profile);
   }
 }
 

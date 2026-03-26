@@ -18,36 +18,13 @@ export interface AnalyticsEvent {
   created_at: string;
 }
 
-export interface WeeklyRecap {
-  report_days: number;
-  viewed_days: number;
-  dominant_theme: string | null;
-  latest_headline: string | null;
-  recurring_themes: string[];
-}
-
-export interface PracticeHistoryDay {
-  date: string;
-  insight_headline: string | null;
-  insight_theme: string | null;
-  quick_summary: string | null;
-  personal_day: number | null;
-  personal_month: number | null;
-  personal_year: number | null;
-  is_read: boolean;
-  has_private_note: boolean;
-  note_excerpt: string | null;
-  is_fallback: boolean;
-}
-
 export interface PracticeSummary {
   current_streak: number;
-  longest_streak: number;
   report_days_last_7: number;
   report_coverage_last_7: number;
   viewed_days_last_7: number;
   viewed_rate_last_7: number;
-  weekly_recap: WeeklyRecap;
+  dominant_theme_last_7: string | null;
 }
 
 export interface RecentPracticeContext {
@@ -61,4 +38,16 @@ export interface RecentPracticeContext {
   } | null;
   recent_themes: string[];
   recent_headlines: string[];
+  recurring_themes: Array<{
+    theme: string;
+    count: number;
+  }>;
+  recent_numbers: Array<{
+    date: string;
+    personal_day: number;
+    personal_month: number;
+    personal_year: number;
+  }>;
+  continuity_note: string | null;
+  theme_shift: string | null;
 }

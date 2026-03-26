@@ -86,3 +86,11 @@ export async function clearDesktopNotificationRuntime(): Promise<void> {
 
   await invoke('clear_notification_runtime');
 }
+
+export async function syncDesktopLaunchOnStartup(enabled: boolean): Promise<void> {
+  if (!isTauri()) {
+    return;
+  }
+
+  await invoke('sync_launch_on_startup', { enabled });
+}

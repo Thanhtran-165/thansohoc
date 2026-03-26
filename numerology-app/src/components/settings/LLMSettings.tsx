@@ -30,7 +30,7 @@ interface LLMSettingsState {
   showApiKey: boolean;
   model: string;
   temperature: number;
-  maxTokens: number;
+  maxTokens: number | null;
   isLoading: boolean;
   isDirty: boolean;
   testResult: TestResult;
@@ -152,7 +152,7 @@ export default function LLMSettings() {
     if (state.temperature < 0 || state.temperature > 2) {
       errors.temperature = messages.llmSettings.validation.temperatureRange;
     }
-    if (state.maxTokens < 100 || state.maxTokens > 8000) {
+    if (state.maxTokens !== null && (state.maxTokens < 100 || state.maxTokens > 32000)) {
       errors.maxTokens = messages.llmSettings.validation.maxTokensRange;
     }
     setState(prev => ({ ...prev, validationErrors: errors }));

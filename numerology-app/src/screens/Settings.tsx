@@ -50,7 +50,7 @@ export default function Settings() {
     quiet_hours_enabled: notifications?.quiet_hours_enabled ?? false,
     quiet_hours_start: notifications?.quiet_hours_start ?? '22:00:00',
     quiet_hours_end: notifications?.quiet_hours_end ?? '06:00:00',
-    launch_on_startup: notifications?.launch_on_startup ?? false,
+    launch_on_startup: notifications?.launch_on_startup ?? true,
     sound_enabled: notifications?.sound_enabled ?? true,
   }), [notifications]);
 

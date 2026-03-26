@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
   quiet_hours_enabled INTEGER NOT NULL DEFAULT 0,
   quiet_hours_start TEXT,
   quiet_hours_end TEXT,
-  launch_on_startup INTEGER NOT NULL DEFAULT 0,
+  launch_on_startup INTEGER NOT NULL DEFAULT 1,
   sound_enabled INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,

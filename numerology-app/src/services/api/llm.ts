@@ -111,6 +111,24 @@ export class LLMClient {
     this.config = { ...DEFAULT_LLM_CONFIG, ...config };
   }
 
+  getModelName(): string {
+    return this.config.model;
+  }
+
+  withConfig(overrides: Partial<LLMConfig>): LLMClient {
+    return new LLMClient(this.apiKey, this.baseUrl, {
+      ...this.config,
+      ...overrides,
+    });
+  }
+
+  withModel(model: string, overrides: Partial<LLMConfig> = {}): LLMClient {
+    return this.withConfig({
+      model,
+      ...overrides,
+    });
+  }
+
   /**
    * Make a chat completion request to the LLM API
    */
@@ -194,7 +212,9 @@ export class LLMClient {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage },
           ],
-          max_tokens: this.config.maxTokens,
+          ...(this.config.maxTokens && this.config.maxTokens > 0
+            ? { max_tokens: this.config.maxTokens }
+            : {}),
           temperature: this.config.temperature,
         }),
         signal: controller.signal,

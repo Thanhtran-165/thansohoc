@@ -475,12 +475,11 @@ async function runMigrationsLocalStorage(): Promise<void> {
  */
 async function runMigrations(database: any): Promise<void> {
   // Get current schema version
-  const getVersion = database.prepare(`
-    SELECT value FROM app_settings WHERE key = 'schema_version'
-  `);
-
   let currentVersion = '0.0.0';
   try {
+    const getVersion = database.prepare(`
+      SELECT value FROM app_settings WHERE key = 'schema_version'
+    `);
     const row = getVersion.get() as { value: string } | undefined;
     if (row) {
       currentVersion = JSON.parse(row.value);
@@ -664,7 +663,7 @@ function runMigration001(database: any): void {
         quiet_hours_enabled INTEGER NOT NULL DEFAULT 0,
         quiet_hours_start TEXT,
         quiet_hours_end TEXT,
-        launch_on_startup INTEGER NOT NULL DEFAULT 0,
+        launch_on_startup INTEGER NOT NULL DEFAULT 1,
         sound_enabled INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
