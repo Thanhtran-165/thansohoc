@@ -9,6 +9,7 @@ import {
   AdvancedNumerologyContext,
   ChallengeNumber,
   CyclicNumbers,
+  ExtendedNumerologyContext,
   KarmicDebtNumber,
   LifeCyclePeriod,
   NumerologyContext,
@@ -54,17 +55,30 @@ import {
   calculateKarmicLessons,
   calculatePinnacles,
 } from './advanced';
+import { calculateTransitContext } from './transits';
+import { calculateLoShuContext } from './loshu';
+import {
+  calculateChaldeanNameNumber,
+  calculateNameVariantComparison,
+  calculatePythagoreanNameNumber,
+} from './chaldean';
 
 /**
  * Get full numerology profile with core numbers and today's cyclic numbers
  */
 export function getFullNumerologyProfile(
   fullName: string,
-  dateOfBirth: string
-): CoreNumerologyResult & CyclicNumbers & { advanced: AdvancedNumerologyContext } {
+  dateOfBirth: string,
+  currentName?: string | null
+): CoreNumerologyResult & CyclicNumbers & { advanced: AdvancedNumerologyContext; extended: ExtendedNumerologyContext } {
   const coreNumbers = calculateCoreNumbers(fullName, dateOfBirth);
   const cyclicNumbers = calculateCyclicNumbers(dateOfBirth, new Date());
   const advanced = calculateAdvancedNumerologyContext(fullName, dateOfBirth, new Date());
+  const extended = {
+    transits: calculateTransitContext(currentName?.trim() || fullName, dateOfBirth, new Date()),
+    lo_shu: calculateLoShuContext(dateOfBirth),
+    name_variants: calculateNameVariantComparison(fullName, currentName),
+  };
 
   return {
     ...coreNumbers,
@@ -72,6 +86,7 @@ export function getFullNumerologyProfile(
     personal_month: cyclicNumbers.personal_month,
     personal_day: cyclicNumbers.personal_day,
     advanced,
+    extended,
   };
 }
 
@@ -81,7 +96,8 @@ export function getFullNumerologyProfile(
 export function calculateNumerologyContext(
   fullName: string,
   dateOfBirth: string,
-  targetDate: Date | string
+  targetDate: Date | string,
+  currentName?: string | null
 ): NumerologyContext {
   const coreNumbers = calculateCoreNumbers(fullName, dateOfBirth);
   const cyclicNumbers = calculateCyclicNumbers(dateOfBirth, targetDate);
@@ -99,6 +115,11 @@ export function calculateNumerologyContext(
     personal_month: cyclicNumbers.personal_month,
     personal_day: cyclicNumbers.personal_day,
     advanced: calculateAdvancedNumerologyContext(fullName, dateOfBirth, targetDate),
+    extended: {
+      transits: calculateTransitContext(currentName?.trim() || fullName, dateOfBirth, targetDate),
+      lo_shu: calculateLoShuContext(dateOfBirth),
+      name_variants: calculateNameVariantComparison(fullName, currentName),
+    },
   };
 }
 
@@ -147,6 +168,11 @@ export {
   calculatePinnacles,
   calculateChallenges,
   calculateAdvancedNumerologyContext,
+  calculateTransitContext,
+  calculateLoShuContext,
+  calculateChaldeanNameNumber,
+  calculatePythagoreanNameNumber,
+  calculateNameVariantComparison,
 };
 
 // Re-export types
@@ -154,6 +180,7 @@ export type {
   AdvancedNumerologyContext,
   ChallengeNumber,
   CyclicNumbers,
+  ExtendedNumerologyContext,
   KarmicDebtNumber,
   LifeCyclePeriod,
   NumerologyContext,

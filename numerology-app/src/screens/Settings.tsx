@@ -15,6 +15,7 @@ import { LLMSettings } from '@components/settings';
 import messages from '@localization';
 import { clearLocalAppData, getLocalAppDataSnapshot } from '@services/database';
 import { configManager } from '@services/config';
+import { PageHero, PageSection, PageWrap } from '@components/layout/ScreenPrimitives';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -108,27 +109,22 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{messages.settings.title}</h1>
-        <p className="text-gray-600 mt-1">
-          {messages.settings.subtitle}
-        </p>
-      </div>
+    <PageWrap>
+      <PageHero
+        eyebrow={messages.settings.title}
+        title={messages.settings.title}
+        subtitle={messages.settings.subtitle}
+        accent="sky"
+      />
 
       {statusMessage && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+        <div className="glass-panel rounded-[22px] border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
           {statusMessage}
         </div>
       )}
 
       {/* Notifications */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {messages.settings.notifications}
-        </h3>
-
+      <PageSection eyebrow={messages.settings.notifications}>
         <div className="space-y-4">
           <SettingToggle
             label={messages.settings.morningInsight.label}
@@ -141,15 +137,15 @@ export default function Settings() {
 
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1">
-              <div className="font-medium text-gray-900">{messages.settings.morningTime.label}</div>
-              <div className="text-sm text-gray-500">
+              <div className="font-medium text-slate-100">{messages.settings.morningTime.label}</div>
+              <div className="text-sm text-slate-400">
                 {messages.settings.morningTime.description}
               </div>
             </div>
             <input
               type="time"
               value={effectiveNotifications.morning_insight_time.slice(0, 5)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="field-dark max-w-[180px]"
               onChange={(e) => updateTimeSetting('morning_insight_time', e.target.value)}
             />
           </div>
@@ -165,15 +161,15 @@ export default function Settings() {
 
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1">
-              <div className="font-medium text-gray-900">{messages.settings.eveningTime.label}</div>
-              <div className="text-sm text-gray-500">
+              <div className="font-medium text-slate-100">{messages.settings.eveningTime.label}</div>
+              <div className="text-sm text-slate-400">
                 {messages.settings.eveningTime.description}
               </div>
             </div>
             <input
               type="time"
               value={effectiveNotifications.evening_journal_time.slice(0, 5)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className="field-dark max-w-[180px]"
               onChange={(e) => updateTimeSetting('evening_journal_time', e.target.value)}
             />
           </div>
@@ -199,34 +195,30 @@ export default function Settings() {
           {effectiveNotifications.quiet_hours_enabled && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bắt đầu</label>
+                <label className="field-label">Bắt đầu</label>
                 <input
                   type="time"
                   value={effectiveNotifications.quiet_hours_start?.slice(0, 5) || '22:00'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="field-dark"
                   onChange={(e) => updateTimeSetting('quiet_hours_start', e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kết thúc</label>
+                <label className="field-label">Kết thúc</label>
                 <input
                   type="time"
                   value={effectiveNotifications.quiet_hours_end?.slice(0, 5) || '06:00'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="field-dark"
                   onChange={(e) => updateTimeSetting('quiet_hours_end', e.target.value)}
                 />
               </div>
             </div>
           )}
         </div>
-      </div>
+      </PageSection>
 
       {/* Application */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {messages.settings.application}
-        </h3>
-
+      <PageSection eyebrow={messages.settings.application}>
         <div className="space-y-4">
           <SettingToggle
             label={messages.settings.launchOnStartup.label}
@@ -237,24 +229,21 @@ export default function Settings() {
             })}
           />
         </div>
-      </div>
+      </PageSection>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <PageSection eyebrow={messages.settings.howItWorks.title}>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            {messages.settings.howItWorks.title}
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-slate-400">
             {messages.settings.howItWorks.subtitle}
           </p>
         </div>
 
-        <div className="space-y-3 text-sm leading-6 text-gray-600">
+        <div className="space-y-3 text-sm leading-7 text-slate-300">
           <div>{`1. ${messages.settings.howItWorks.steps.setup}`}</div>
           <div>{`2. ${messages.settings.howItWorks.steps.generate}`}</div>
           <div>{`3. ${messages.settings.howItWorks.steps.read}`}</div>
         </div>
-      </div>
+      </PageSection>
 
       {/* AI / LLM Settings */}
       <div className="mb-6">
@@ -262,56 +251,52 @@ export default function Settings() {
       </div>
 
       {/* Data */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {messages.settings.dataPrivacy}
-        </h3>
-
+      <PageSection eyebrow={messages.settings.dataPrivacy}>
         <div className="space-y-4">
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1">
-              <div className="font-medium text-gray-900">{messages.settings.storageMode.label}</div>
-              <div className="text-sm text-gray-500">
+              <div className="font-medium text-slate-100">{messages.settings.storageMode.label}</div>
+              <div className="text-sm text-slate-400">
                 {messages.settings.storageMode.description}
               </div>
             </div>
-            <span className="text-gray-600">{messages.settings.storageMode.value}</span>
+            <span className="text-slate-300">{messages.settings.storageMode.value}</span>
           </div>
 
           <div className="flex items-center gap-4 py-2">
             <div className="flex-1">
-              <div className="font-medium text-gray-900">{messages.settings.exportData.label}</div>
-              <div className="text-sm text-gray-500">
+              <div className="font-medium text-slate-100">{messages.settings.exportData.label}</div>
+              <div className="text-sm text-slate-400">
                 {messages.settings.exportData.description}
               </div>
             </div>
             <button
               type="button"
               onClick={handleExportData}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
+              className="button-secondary-dark"
             >
               {messages.actions.export}
             </button>
           </div>
 
-          <div className="flex items-center gap-4 py-2 border-t border-gray-100 pt-4">
+          <div className="flex items-center gap-4 border-t border-white/8 py-2 pt-4">
             <div className="flex-1">
-              <div className="font-medium text-red-600">{messages.settings.deleteData.label}</div>
-              <div className="text-sm text-gray-500">
+              <div className="font-medium text-rose-200">{messages.settings.deleteData.label}</div>
+              <div className="text-sm text-slate-400">
                 {messages.settings.deleteData.description}
               </div>
             </div>
             <button
               type="button"
               onClick={handleDeleteData}
-              className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition-colors"
+              className="button-danger-dark"
             >
               {messages.actions.delete}
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </PageSection>
+    </PageWrap>
   );
 }
 
@@ -329,8 +314,8 @@ function SettingToggle({
   return (
     <div className="flex items-center gap-4 py-2">
       <div className="flex-1">
-        <div className="font-medium text-gray-900">{label}</div>
-        <div className="text-sm text-gray-500">{description}</div>
+        <div className="font-medium text-slate-100">{label}</div>
+        <div className="text-sm text-slate-400">{description}</div>
       </div>
       <button
         type="button"
@@ -338,7 +323,7 @@ function SettingToggle({
         role="switch"
         aria-checked={enabled}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          enabled ? 'bg-primary-500' : 'bg-gray-300'
+          enabled ? 'bg-sky-400' : 'bg-slate-700'
         }`}
       >
         <span

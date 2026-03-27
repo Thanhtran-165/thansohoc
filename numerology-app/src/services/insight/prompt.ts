@@ -125,7 +125,15 @@ Use instead of absolute statements:
 - Use assembly_plan paragraph by paragraph. Treat it as the report blueprint for quick, standard, and deep layers.
 - Use methodology_trace.ruling_stack and methodology_trace.emphasis_order to keep the weighting consistent.
 - Do not overweight hidden_passion, karmic lessons, or karmic debt if methodology_trace.do_not_overweight says they are secondary.
-- Do not invent a different reading hierarchy when the blueprint already provides one.`;
+- Do not invent a different reading hierarchy when the blueprint already provides one.
+- Respect meta_methodology:
+  - primary_system is the backbone of the daily report.
+  - supporting_lenses are optional, not mandatory.
+  - Only mention a supporting lens when include_in_daily_report is true and it adds a genuinely new layer.
+  - Never let Lo Shu, Chaldean, name shifts, or transit language replace the daily stack built from personal cycles.
+  - Use at most two supporting lenses in the whole report unless the payload makes a third one unusually central.
+- If an extended lens is only background context, keep it out of the quick layer and usually out of the standard layer.
+- The report should feel richer because of supporting lenses, not more crowded.`;
 
 const PRESENTATION_REQUIREMENTS = `
 
@@ -144,6 +152,7 @@ const PRESENTATION_REQUIREMENTS = `
 - closing_signal should feel like the line a reader carries away after finishing the report.
 - When the user's language is "vi", all presentation labels must sound natural in Vietnamese, not like translated taxonomy.
 - Do not use presentation blocks to comment on the UI, the reading flow, or the fact that the user is reading a report.
+- If a supporting lens matters today, let it influence the mood or focal point implicitly rather than turning the presentation into a list of systems.
 - These blocks are part of the required JSON.`;
 
 /**
@@ -360,15 +369,23 @@ You are writing the full narrative layers for today's report.
 - The quick layer should name the heart of the day once, clearly.
 - The standard layer should expand with new angles, not paraphrase the quick layer.
 - The deep layer should deepen tension, context, and consequence instead of repeating earlier summaries.
+- Keep the daily stack as the spine:
+  - quick = only the core day reading
+  - standard = core day reading plus at most one supporting lens if it truly adds something new
+  - deep = where supporting lenses can appear more fully, but still only when they illuminate the day
 - In the deep layer, try to cover as many of these as are truly relevant:
   - what the user is likely to feel first
   - what makes the day easier or harder
   - where short-cycle and long-cycle numbers reinforce each other
   - where they quietly pull in different directions
+  - where essence/transits deepen the time context
+  - where Lo Shu explains a familiar trait or blind spot
+  - where the current name or Chaldean layer shifts how the day is expressed
   - how that tension may show up in work, relationships, and self-management
   - what becomes clearer if the user slows down and notices the day carefully
 - Prefer several well-developed paragraphs over one compressed block. Let the reading breathe.
 - Avoid phrases that sound engineered or mechanical, such as "pattern", "frame", "operates like", "functions as", "bối cảnh chung", or "áp lực khép vòng" unless they are rewritten into natural language.
+- Do not list numerology systems for their own sake. Pull them in only when they clarify today's experience.
 - Output valid JSON only.
 
 ## NARRATIVE OUTPUT SCHEMA

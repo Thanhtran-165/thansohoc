@@ -110,7 +110,7 @@ export function JournalForm({
       <div className="space-y-5">
         {/* Mood Section */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2.5">
+          <label className="field-label mb-2.5 block text-xs">
             {messages.journal.mood.label}
           </label>
           <div className="flex items-center gap-2">
@@ -122,15 +122,15 @@ export function JournalForm({
                   onClick={() => setMoodScore(n)}
                   className={`w-6 h-6 rounded-md transition-all duration-150 ${
                     n <= moodScore
-                      ? 'bg-primary-500 scale-110 shadow-sm'
-                      : 'bg-gray-200 hover:bg-gray-300 scale-100'
+                      ? 'bg-sky-400 scale-110 shadow-[0_8px_18px_rgba(56,189,248,0.28)]'
+                      : 'bg-white/10 hover:bg-white/16 scale-100'
                   }`}
                 />
               ))}
             </div>
             <div className="w-8 flex items-center justify-center">
               <span className={`text-base font-bold ${
-                moodScore <= 3 ? 'text-primary-600' : 'text-gray-500'
+                moodScore <= 3 ? 'text-sky-300' : 'text-slate-400'
               }`}>
                 {moodScore}
               </span>
@@ -140,7 +140,7 @@ export function JournalForm({
 
         {/* Energy Section */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2.5">
+          <label className="field-label mb-2.5 block text-xs">
             {messages.journal.energy.label}
           </label>
           <div className="flex items-center gap-2">
@@ -152,15 +152,15 @@ export function JournalForm({
                   onClick={() => setEnergyScore(n)}
                   className={`w-6 h-6 rounded-md transition-all duration-150 ${
                     n <= energyScore
-                      ? 'bg-amber-500 scale-110 shadow-sm'
-                      : 'bg-gray-200 hover:bg-gray-300 scale-100'
+                      ? 'bg-amber-400 scale-110 shadow-[0_8px_18px_rgba(251,191,36,0.28)]'
+                      : 'bg-white/10 hover:bg-white/16 scale-100'
                   }`}
                 />
               ))}
             </div>
             <div className="w-8 flex items-center justify-center">
               <span className={`text-base font-bold ${
-                energyScore <= 3 ? 'text-amber-600' : 'text-gray-500'
+                energyScore <= 3 ? 'text-amber-300' : 'text-slate-400'
               }`}>
                 {energyScore}
               </span>
@@ -170,7 +170,7 @@ export function JournalForm({
 
         {/* Emotions Section */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2.5">
+          <label className="field-label mb-2.5 block text-xs">
             {messages.journal.emotions.label}
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -181,8 +181,8 @@ export function JournalForm({
                 onClick={() => toggleEmotion(emotion)}
                 className={`px-2.5 py-1 text-xs rounded-full transition-all duration-150 ${
                   selectedEmotions.includes(emotion)
-                    ? 'bg-primary-500 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'border border-sky-300/35 bg-sky-400/12 text-sky-100 shadow-[0_10px_26px_rgba(56,189,248,0.16)]'
+                    : 'border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
                 }`}
               >
                 {EMOTION_TAG_LABELS[emotion]}
@@ -193,7 +193,7 @@ export function JournalForm({
 
         {/* Reflection Text */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2.5">
+          <label className="field-label mb-2.5 block text-xs">
             {messages.journal.reflection.label}
           </label>
           <textarea
@@ -201,13 +201,13 @@ export function JournalForm({
             onChange={(e) => setReflectionText(e.target.value)}
             placeholder={messages.journal.reflection.placeholder}
             rows={3}
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none focus:outline-none"
+            className="field-dark min-h-[96px] resize-none"
           />
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">
+          <div className="rounded-[18px] border border-rose-300/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-200">
             {error}
           </div>
         )}
@@ -218,7 +218,7 @@ export function JournalForm({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="button-primary-dark flex w-full items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
@@ -244,51 +244,51 @@ export function JournalForm({
     <div className="space-y-5">
       {/* Mood Slider */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="field-label">
           {messages.journal.mood.question}
         </label>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500">{messages.journal.mood.low}</span>
+          <span className="text-xs text-slate-500">{messages.journal.mood.low}</span>
           <input
             type="range"
             min={1}
             max={10}
             value={moodScore}
             onChange={(e) => setMoodScore(Number(e.target.value))}
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-white/12 accent-sky-400 focus:outline-none"
           />
-          <span className="text-xs text-gray-500">{messages.journal.mood.high}</span>
+          <span className="text-xs text-slate-500">{messages.journal.mood.high}</span>
         </div>
-        <div className="text-center text-3xl font-bold text-primary-600">
+        <div className="text-center text-3xl font-bold text-sky-300">
           {moodScore}
         </div>
       </div>
 
       {/* Energy Slider */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="field-label">
           {messages.journal.energy.question}
         </label>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500">{messages.journal.energy.low}</span>
+          <span className="text-xs text-slate-500">{messages.journal.energy.low}</span>
           <input
             type="range"
             min={1}
             max={10}
             value={energyScore}
             onChange={(e) => setEnergyScore(Number(e.target.value))}
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-white/12 accent-amber-400 focus:outline-none"
           />
-          <span className="text-xs text-gray-500">{messages.journal.energy.high}</span>
+          <span className="text-xs text-slate-500">{messages.journal.energy.high}</span>
         </div>
-        <div className="text-center text-3xl font-bold text-amber-600">
+        <div className="text-center text-3xl font-bold text-amber-300">
           {energyScore}
         </div>
       </div>
 
       {/* Emotion Tags */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="field-label">
           {messages.journal.emotions.label}
         </label>
         <div className="flex flex-wrap gap-2">
@@ -297,10 +297,10 @@ export function JournalForm({
               key={emotion}
               type="button"
               onClick={() => toggleEmotion(emotion)}
-              className={`px-3 py-1.5 text-sm rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+              className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
                 selectedEmotions.includes(emotion)
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'border-sky-300/35 bg-sky-400/12 text-sky-100'
+                  : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
               }`}
             >
               {EMOTION_TAG_LABELS[emotion]}
@@ -311,7 +311,7 @@ export function JournalForm({
 
       {/* Reflection Text */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="field-label">
           {messages.journal.reflection.label}
         </label>
         <textarea
@@ -319,18 +319,18 @@ export function JournalForm({
           onChange={(e) => setReflectionText(e.target.value)}
           placeholder={messages.journal.reflection.placeholder}
           rows={3}
-          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none focus:outline-none"
+          className="field-dark min-h-[96px] resize-none"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+      <div className="flex justify-end gap-3 border-t border-white/8 pt-4">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="px-3 py-1.5 text-gray-600 hover:text-gray-800 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-300 rounded"
+            className="button-ghost-dark"
           >
             {messages.actions.cancel}
           </button>
@@ -339,7 +339,7 @@ export function JournalForm({
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting || !moodScore || !energyScore}
-          className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="button-primary-dark"
         >
           {isSubmitting ? messages.journal.saving : (todayEntry ? messages.journal.update : messages.journal.save)}
         </button>

@@ -54,7 +54,7 @@ export function WhyThisInsightModal({
     return (
       <Modal isOpen={true} onClose={onClose} title={messages.insight.whyThisTitle}>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-300/30 border-t-sky-300" />
         </div>
       </Modal>
     );
@@ -63,7 +63,7 @@ export function WhyThisInsightModal({
   if (error) {
     return (
       <Modal isOpen={true} onClose={onClose} title={messages.insight.whyThisTitle}>
-        <div className="text-center py-8 text-red-500">
+        <div className="py-8 text-center text-rose-300">
           {error}
         </div>
       </Modal>
@@ -75,10 +75,10 @@ export function WhyThisInsightModal({
     return (
       <Modal isOpen={true} onClose={onClose} title={messages.insight.whyThisTitle}>
         <div className="text-center py-8">
-          <p className="text-gray-500">
+          <p className="text-slate-300">
             {messages.insight.explanationNotAvailable}
           </p>
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="mt-2 text-sm text-slate-500">
             {messages.insight.explanationNotAvailableDetail}
           </p>
         </div>
@@ -88,26 +88,26 @@ export function WhyThisInsightModal({
 
   return (
     <Modal isOpen={true} onClose={onClose} title={messages.insight.whyThisTitle}>
-      <div className="max-h-[70vh] overflow-y-auto">
+      <div className="max-h-[70vh] overflow-y-auto pr-1">
         {/* Data Sources */}
         <section className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.dataSources}</h4>
-          <div className="bg-gray-50 rounded-lg p-4">
+          <h4 className="mb-3 text-sm font-medium text-slate-200">{messages.insight.dataSources}</h4>
+          <div className="glass-card rounded-[22px] p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">{messages.insight.profileCompleteness}</span>
+              <span className="text-sm text-slate-400">{messages.insight.profileCompleteness}</span>
               <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 w-24 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full bg-green-500 transition-all"
+                    className="h-full bg-emerald-300 transition-all"
                     style={{ width: `${data.data_sources.profile_completeness * 100}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-slate-100">
                   {(data.data_sources.profile_completeness * 100).toFixed(0)}%
                 </span>
               </div>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-slate-500">
               {messages.insight.available}: {data.data_sources.data_available.join(', ')}
             </div>
           </div>
@@ -115,18 +115,18 @@ export function WhyThisInsightModal({
 
         {/* Calculated Claims */}
         <section className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.calculatedClaims}</h4>
+          <h4 className="mb-3 text-sm font-medium text-slate-200">{messages.insight.calculatedClaims}</h4>
           <div className="space-y-3">
             {data.calculated_claims.map((claim, index) => (
-              <div key={index} className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-blue-800 mb-2">
+              <div key={index} className="glass-card rounded-[22px] p-4">
+                <p className="mb-2 text-sm font-medium text-slate-100">
                   {claim.claim}
                 </p>
-                <div className="text-xs text-blue-600 bg-blue-100 rounded px-2 py-1 font-mono">
+                <div className="inline-flex rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 font-mono text-xs text-sky-200">
                   {claim.formula}
                 </div>
                 {claim.inputs && Object.keys(claim.inputs).length > 0 && (
-                  <div className="mt-2 text-xs text-gray-500">
+                  <div className="mt-2 text-xs text-slate-500">
                     <span className="font-medium">{messages.insight.inputs}:</span>{' '}
                     {Object.entries(claim.inputs).map(([k, v]) => `${k}=${v}`).join(', ')}
                   </div>
@@ -138,18 +138,18 @@ export function WhyThisInsightModal({
 
         {/* Interpretation Basis */}
         <section className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.interpretationBasis}</h4>
-          <div className="bg-purple-50 rounded-lg p-4">
+          <h4 className="mb-3 text-sm font-medium text-slate-200">{messages.insight.interpretationBasis}</h4>
+          <div className="glass-card rounded-[22px] p-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">{messages.insight.style}:</span>
-                <span className="ml-2 font-medium text-purple-700 capitalize">
+                <span className="text-slate-500">{messages.insight.style}:</span>
+                <span className="ml-2 font-medium capitalize text-violet-200">
                   {data.interpretation_basis.style_preference}
                 </span>
               </div>
               <div>
-                <span className="text-gray-500">{messages.insight.context}:</span>
-                <span className="ml-2 text-purple-700 text-xs">
+                <span className="text-slate-500">{messages.insight.context}:</span>
+                <span className="ml-2 text-xs text-violet-200">
                   {data.interpretation_basis.numerology_context.join(', ')}
                 </span>
               </div>
@@ -160,41 +160,41 @@ export function WhyThisInsightModal({
               data.interpretation_basis.conflict_grammar) && (
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {data.interpretation_basis.dominant_axis && (
-                  <div className="rounded-lg bg-white/70 p-3">
-                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+                  <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
                       {messages.insight.dominantAxis}
                     </div>
-                    <div className="mt-2 text-sm font-medium text-purple-800">
+                    <div className="mt-2 text-sm font-medium text-slate-100">
                       {data.interpretation_basis.dominant_axis}
                     </div>
                   </div>
                 )}
                 {data.interpretation_basis.pattern && (
-                  <div className="rounded-lg bg-white/70 p-3">
-                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+                  <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
                       {messages.insight.pattern}
                     </div>
-                    <div className="mt-2 text-sm font-medium text-purple-800">
+                    <div className="mt-2 text-sm font-medium text-slate-100">
                       {data.interpretation_basis.pattern}
                     </div>
                   </div>
                 )}
                 {data.interpretation_basis.report_archetype && (
-                  <div className="rounded-lg bg-white/70 p-3">
-                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+                  <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
                       {messages.insight.reportArchetype}
                     </div>
-                    <div className="mt-2 text-sm font-medium text-purple-800">
+                    <div className="mt-2 text-sm font-medium text-slate-100">
                       {data.interpretation_basis.report_archetype}
                     </div>
                   </div>
                 )}
                 {data.interpretation_basis.conflict_grammar && (
-                  <div className="rounded-lg bg-white/70 p-3">
-                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+                  <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
                       {messages.insight.conflictGrammar}
                     </div>
-                    <div className="mt-2 text-sm font-medium text-purple-800">
+                    <div className="mt-2 text-sm font-medium text-slate-100">
                       {data.interpretation_basis.conflict_grammar}
                     </div>
                   </div>
@@ -203,14 +203,14 @@ export function WhyThisInsightModal({
             )}
             {data.interpretation_basis.ruling_stack && data.interpretation_basis.ruling_stack.length > 0 && (
               <div className="mt-4">
-                <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500 mb-2">
+                <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
                   {messages.insight.hierarchy}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {data.interpretation_basis.ruling_stack.map((item) => (
                     <span
                       key={item}
-                      className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-purple-700 ring-1 ring-purple-100"
+                      className="rounded-full border border-violet-300/20 bg-violet-400/10 px-3 py-1 text-xs font-medium text-violet-100"
                     >
                       {item}
                     </span>
@@ -220,12 +220,12 @@ export function WhyThisInsightModal({
             )}
             {data.interpretation_basis.section_plan && data.interpretation_basis.section_plan.length > 0 && (
               <div className="mt-4">
-                <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500 mb-2">
+                <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
                   {messages.insight.reportStructure}
                 </div>
                 <div className="space-y-2">
                   {data.interpretation_basis.section_plan.map((item, index) => (
-                    <div key={`${index}-${item}`} className="rounded-lg bg-white/70 px-3 py-2 text-sm text-purple-800">
+                    <div key={`${index}-${item}`} className="rounded-[18px] border border-white/8 bg-white/[0.04] px-3 py-2 text-sm text-slate-200">
                       {item}
                     </div>
                   ))}
@@ -234,19 +234,19 @@ export function WhyThisInsightModal({
             )}
             {data.interpretation_basis.assembly_plan && data.interpretation_basis.assembly_plan.length > 0 && (
               <div className="mt-4">
-                <div className="text-xs font-medium uppercase tracking-[0.16em] text-gray-500 mb-2">
+                <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
                   {messages.insight.auditTrail}
                 </div>
                 <div className="space-y-2">
                   {data.interpretation_basis.assembly_plan.map((item, index) => (
-                    <div key={`${index}-${item}`} className="rounded-lg bg-white/70 px-3 py-2 text-sm text-purple-800">
+                    <div key={`${index}-${item}`} className="rounded-[18px] border border-white/8 bg-white/[0.04] px-3 py-2 text-sm text-slate-200">
                       {item}
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-slate-500">
               {messages.insight.modelVersion}{data.interpretation_basis.model_version} •
               {messages.insight.promptVersion}{data.interpretation_basis.prompt_version}
             </div>
@@ -255,39 +255,39 @@ export function WhyThisInsightModal({
 
         {/* Confidence Breakdown */}
         <section className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.confidenceBreakdown}</h4>
+          <h4 className="mb-3 text-sm font-medium text-slate-200">{messages.insight.confidenceBreakdown}</h4>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">{messages.insight.dataQuality}</span>
+              <span className="text-sm text-slate-400">{messages.insight.dataQuality}</span>
               <div className="flex items-center gap-2">
-                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 w-32 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full bg-green-500 rounded-full"
+                    className="h-full rounded-full bg-emerald-300"
                     style={{ width: `${data.confidence_breakdown.data * 100}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-slate-100">
                   {(data.confidence_breakdown.data * 100).toFixed(0)}%
                 </span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">{messages.insight.interpretationConfidence}</span>
+              <span className="text-sm text-slate-400">{messages.insight.interpretationConfidence}</span>
               <div className="flex items-center gap-2">
-                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 w-32 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full bg-purple-500 rounded-full"
+                    className="h-full rounded-full bg-violet-300"
                     style={{ width: `${data.confidence_breakdown.interpretation * 100}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-slate-100">
                   {(data.confidence_breakdown.interpretation * 100).toFixed(0)}%
                 </span>
               </div>
             </div>
-            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-              <span className="text-sm font-medium text-gray-700">{messages.insight.overall}</span>
-              <span className="text-lg font-bold text-primary-600">
+            <div className="flex items-center justify-between border-t border-white/8 pt-2">
+              <span className="text-sm font-medium text-slate-100">{messages.insight.overall}</span>
+              <span className="text-lg font-bold text-sky-200">
                 {(data.confidence_breakdown.overall * 100).toFixed(0)}%
               </span>
             </div>
@@ -297,8 +297,8 @@ export function WhyThisInsightModal({
         {/* Explanation */}
         {data.explanation && (
           <section>
-            <h4 className="text-sm font-medium text-gray-700 mb-3">{messages.insight.summary}</h4>
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <h4 className="mb-3 text-sm font-medium text-slate-200">{messages.insight.summary}</h4>
+            <p className="text-sm leading-relaxed text-slate-300">
               {data.explanation}
             </p>
           </section>

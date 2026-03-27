@@ -51,6 +51,10 @@ function getProfileFromStorage(): UserProfile | null {
     profile.insight_length = 'detailed';
     shouldSave = true;
   }
+  if (!profile.current_name) {
+    profile.current_name = profile.full_name;
+    shouldSave = true;
+  }
   if (shouldSave) {
     saveProfileToStorage(profile);
   }
@@ -121,6 +125,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     const profile: UserProfile = {
       id,
       full_name: input.full_name,
+      current_name: input.full_name,
       date_of_birth: input.date_of_birth,
       style_preference: input.style_preference,
       insight_length: 'detailed',
@@ -151,6 +156,7 @@ export const useUserStore = create<UserState>((set, get) => ({
     const updatedProfile: UserProfile = {
       ...profile,
       ...input,
+      current_name: input.current_name === '' ? null : input.current_name ?? profile.current_name ?? profile.full_name,
       insight_length: 'detailed',
       updated_at: now,
     };

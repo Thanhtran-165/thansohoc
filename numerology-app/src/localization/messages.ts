@@ -17,6 +17,13 @@ export const messages = {
   // Navigation
   nav: {
     dashboard: 'Báo cáo hôm nay',
+    guidance: 'Dùng ngay',
+    reading: 'Đọc sâu',
+    compass: 'La bàn ngày',
+    continuity: 'Mạch riêng',
+    cycles: 'Chu kỳ sâu',
+    birthChart: 'Biểu đồ ngày sinh',
+    nameLayers: 'Lớp tên',
     profile: 'Hồ sơ',
     settings: 'Cài đặt',
     skipToContent: 'Đi đến nội dung chính',
@@ -133,6 +140,53 @@ export const messages = {
     },
   },
 
+  continuity: {
+    title: 'Mạch riêng của bạn',
+    subtitle: 'Đặt báo cáo hằng ngày vào nhịp 30 ngày, tuần này và tháng này để câu chuyện không bị đứt đoạn.',
+    empty: 'Chưa có đủ dữ liệu để tạo mạch riêng. Hãy mở thêm vài báo cáo để phần này rõ hơn.',
+    cards: {
+      continuity: 'Mạch 30 ngày',
+      streak: 'Chuỗi hiện tại',
+      opened7: 'Đã mở 30 ngày',
+      shift: 'Nhịp đang đổi',
+      recurring: 'Chủ đề trở lại',
+      recentNumbers: 'Dòng nhịp gần đây',
+      strongest: 'Mạch rõ nhất',
+      weekly: 'Tuần này',
+      monthly: 'Tháng này',
+    },
+  },
+
+  guidance: {
+    title: 'Dùng ngay',
+    subtitle: 'Những gợi ý có thể áp dụng trong chính ngày hôm nay.',
+  },
+
+  reading: {
+    title: 'Đọc sâu',
+    subtitle: 'Đi vào phần luận giải sâu mà không bị chen bởi các phần phụ.',
+  },
+
+  compass: {
+    title: 'La bàn ngày',
+    subtitle: 'Tách riêng phần lực kéo và các con số để bạn nhìn cấu trúc của ngày mà không làm nặng phần đọc.',
+  },
+
+  cycles: {
+    title: 'Chu kỳ sâu',
+    subtitle: 'Theo dõi transit và essence như một lớp chu kỳ dài hơn đang đi qua tên và đời sống của bạn.',
+  },
+
+  birthChart: {
+    title: 'Biểu đồ ngày sinh',
+    subtitle: 'Đọc ngày sinh theo Lo Shu để thấy các mũi tên, khoảng trống và cách các con số phân bố trong nền bẩm sinh.',
+  },
+
+  nameLayers: {
+    title: 'Lớp tên',
+    subtitle: 'So sánh tên khai sinh, tên đang dùng và lớp đọc Chaldean để xem cách âm tên đang tạo sắc thái khác nhau.',
+  },
+
   // Profile screen
   profile: {
     title: 'Hồ sơ',
@@ -146,6 +200,8 @@ export const messages = {
     languageEn: 'Tiếng Anh',
     fullName: 'Họ và tên',
     fullNamePlaceholder: 'Nhập họ và tên của bạn',
+    currentName: 'Tên đang dùng',
+    currentNamePlaceholder: 'Nếu khác tên khai sinh, nhập tên bạn đang dùng hằng ngày',
     dateOfBirth: 'Ngày sinh',
     born: 'Sinh ngày',
     coreNumbers: 'Các con số cốt lõi',

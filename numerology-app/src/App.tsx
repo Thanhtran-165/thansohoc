@@ -7,6 +7,13 @@ import ErrorBoundary from '@components/common/ErrorBoundary';
 import AppShell from '@components/layout/AppShell';
 import Onboarding from '@screens/Onboarding';
 import Dashboard from '@screens/Dashboard';
+import Guidance from '@screens/Guidance';
+import Reading from '@screens/Reading';
+import Compass from '@screens/Compass';
+import Continuity from '@screens/Continuity';
+import DeepCycles from '@screens/DeepCycles';
+import BirthChart from '@screens/BirthChart';
+import NameLayers from '@screens/NameLayers';
 import Profile from '@screens/Profile';
 import Settings from '@screens/Settings';
 import {
@@ -15,6 +22,7 @@ import {
   syncDesktopLaunchOnStartup,
   syncDesktopNotificationRuntime,
 } from '@services/desktopNotifications';
+import { migrateLegacyDesktopStorage } from '@services/desktopStorageMigration';
 import { trackEvent } from '@services/analytics';
 
 function App() {
@@ -28,6 +36,7 @@ function App() {
 
     const bootstrap = async () => {
       try {
+        await migrateLegacyDesktopStorage();
         await loadProfile();
       } finally {
         if (isMounted) {
@@ -100,8 +109,8 @@ function App() {
   if (isBootstrapping) {
     return (
       <ErrorBoundary>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-          <div className="flex items-center gap-3 text-gray-600">
+        <div className="min-h-screen bg-[linear-gradient(180deg,_#040b15_0%,_#0a1424_100%)] flex items-center justify-center p-6">
+          <div className="glass-panel flex items-center gap-3 rounded-[28px] px-5 py-4 text-slate-300">
             <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             <span>Đang tải dữ liệu...</span>
           </div>
@@ -122,6 +131,13 @@ function App() {
           <>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<AppShell><Dashboard /></AppShell>} />
+            <Route path="/guidance" element={<AppShell><Guidance /></AppShell>} />
+            <Route path="/reading" element={<AppShell><Reading /></AppShell>} />
+            <Route path="/compass" element={<AppShell><Compass /></AppShell>} />
+            <Route path="/continuity" element={<AppShell><Continuity /></AppShell>} />
+            <Route path="/cycles" element={<AppShell><DeepCycles /></AppShell>} />
+            <Route path="/birth-chart" element={<AppShell><BirthChart /></AppShell>} />
+            <Route path="/name-layers" element={<AppShell><NameLayers /></AppShell>} />
             <Route path="/profile" element={<AppShell><Profile /></AppShell>} />
             <Route path="/settings" element={<AppShell><Settings /></AppShell>} />
             <Route path="/onboarding" element={<Navigate to="/dashboard" replace />} />

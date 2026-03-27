@@ -62,6 +62,7 @@ export interface GenerateInsightOptions {
   force?: boolean; // Force regeneration even if exists
   includeDeep?: boolean; // Request deep layer
   fullName: string;
+  currentName?: string | null;
   dateOfBirth: string;
   stylePreference?: 'gentle' | 'direct' | 'practical' | 'spiritual';
   insightLength?: 'brief' | 'detailed';
@@ -150,6 +151,7 @@ export class InsightService {
       date,
       force = false,
       fullName,
+      currentName,
       dateOfBirth,
       stylePreference,
       insightLength,
@@ -181,7 +183,7 @@ export class InsightService {
     }
 
     // Get numerology context
-    const numerologyContext = this.getNumerologyContext(fullName, dateOfBirth, targetDate);
+    const numerologyContext = this.getNumerologyContext(fullName, currentName, dateOfBirth, targetDate);
     const interpretationBlueprint = createInterpretationBlueprint(numerologyContext);
     const recentContext = getRecentPracticeContext(userId);
 
@@ -601,11 +603,12 @@ export class InsightService {
    */
   private getNumerologyContext(
     fullName: string,
+    currentName: string | null | undefined,
     dateOfBirth: string,
     targetDate: string
   ): NumerologyContext {
     // Calculate numerology context for the target date
-    const numerologyResult = calculateNumerologyContext(fullName, dateOfBirth, targetDate);
+    const numerologyResult = calculateNumerologyContext(fullName, dateOfBirth, targetDate, currentName);
 
     // Map to insight NumerologyContext format
     return {
@@ -617,6 +620,7 @@ export class InsightService {
       soul_urge: numerologyResult.core.soul_urge,
       birthday_number: numerologyResult.core.birthday_number,
       advanced: numerologyResult.advanced,
+      extended: numerologyResult.extended,
     };
   }
 

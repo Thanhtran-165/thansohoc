@@ -4,6 +4,7 @@
 export type NumerologyNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 22 | 33;
 export type ChallengeNumber = 0 | NumerologyNumber;
 export type KarmicDebtNumber = 13 | 14 | 16 | 19;
+export type LoShuDigit = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export interface NumerologyProfile {
   id: string;
@@ -59,6 +60,73 @@ export interface AdvancedNumerologyContext {
   current_challenge: LifeCyclePeriod<ChallengeNumber>;
 }
 
+export interface TransitLetterWindow {
+  source: 'leading_name' | 'middle_name' | 'ending_name';
+  label: string;
+  letter: string;
+  value: NumerologyNumber;
+  from_age: number;
+  to_age: number;
+}
+
+export interface TransitYearProfile {
+  year: number;
+  age: number;
+  letters: TransitLetterWindow[];
+  essence_compound: number;
+  essence_number: NumerologyNumber;
+}
+
+export interface TransitContext {
+  methodology: 'pythagorean_name_transits';
+  current_age: number;
+  current_year: number;
+  current: TransitYearProfile;
+  next_years: TransitYearProfile[];
+}
+
+export interface LoShuArrow {
+  id: string;
+  numbers: [LoShuDigit, LoShuDigit, LoShuDigit];
+  kind: 'present' | 'missing';
+  label: string;
+  meaning: string;
+}
+
+export interface LoShuContext {
+  methodology: 'lo_shu';
+  grid: Record<LoShuDigit, number>;
+  driver_number: NumerologyNumber;
+  conductor_number: NumerologyNumber;
+  present_arrows: LoShuArrow[];
+  missing_arrows: LoShuArrow[];
+  dominant_digits: Array<{ digit: LoShuDigit; count: number }>;
+  absent_digits: LoShuDigit[];
+}
+
+export interface ChaldeanNameNumber {
+  label: string;
+  raw_total: number;
+  reduced: NumerologyNumber;
+}
+
+export interface NameVariantComparison {
+  birth_name: string;
+  current_name: string;
+  differs: boolean;
+  pythagorean_birth: ChaldeanNameNumber;
+  pythagorean_current: ChaldeanNameNumber;
+  chaldean_birth: ChaldeanNameNumber;
+  chaldean_current: ChaldeanNameNumber;
+  dominant_shift: string;
+}
+
+export interface ExtendedNumerologyContext {
+  transits: TransitContext;
+  lo_shu: LoShuContext;
+  name_variants: NameVariantComparison;
+}
+
 // Full numerology context for a given date
 export interface NumerologyContext extends CyclicNumbers {
   core: {
@@ -70,6 +138,7 @@ export interface NumerologyContext extends CyclicNumbers {
     maturity_number: NumerologyNumber | null;
   };
   advanced: AdvancedNumerologyContext;
+  extended: ExtendedNumerologyContext;
 }
 
 // Letter to number mapping in numerology

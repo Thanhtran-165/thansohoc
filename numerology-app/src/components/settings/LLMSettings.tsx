@@ -104,7 +104,7 @@ export default function LLMSettings() {
           ),
           text: messages.llmSettings.status.notConfigured.text,
           subtext: messages.llmSettings.status.notConfigured.subtext,
-          bgClass: 'bg-amber-50 border-amber-200 text-amber-800 textIcon-amber-500',
+          bgClass: 'border-amber-300/20 bg-amber-400/10 text-amber-200 text-amber-300',
         };
       case 'saved_not_tested':
         return {
@@ -115,7 +115,7 @@ export default function LLMSettings() {
           ),
           text: messages.llmSettings.status.savedNotTested.text,
           subtext: messages.llmSettings.status.savedNotTested.subtext,
-          bgClass: 'bg-blue-50 border-blue-200 text-blue-800 textIcon-blue-500',
+          bgClass: 'border-sky-300/20 bg-sky-400/10 text-sky-200 text-sky-300',
         };
       case 'connection_successful':
         return {
@@ -126,7 +126,7 @@ export default function LLMSettings() {
           ),
           text: messages.llmSettings.status.connectionSuccessful.text,
           subtext: messages.llmSettings.status.connectionSuccessful.subtext,
-          bgClass: 'bg-green-50 border-green-200 text-green-800 textIcon-green-500',
+          bgClass: 'border-emerald-300/20 bg-emerald-400/10 text-emerald-200 text-emerald-300',
         };
       case 'last_test_failed':
         return {
@@ -137,7 +137,7 @@ export default function LLMSettings() {
           ),
           text: messages.llmSettings.status.lastTestFailed.text,
           subtext: state.testMessage || messages.llmSettings.status.lastTestFailed.subtext,
-          bgClass: 'bg-red-50 border-red-200 text-red-800 textIcon-red-500',
+          bgClass: 'border-rose-300/20 bg-rose-400/10 text-rose-200 text-rose-300',
         };
     }
   };
@@ -320,11 +320,11 @@ export default function LLMSettings() {
 
   if (state.isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="glass-panel rounded-[32px] p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-6 w-1/4 rounded bg-white/10"></div>
+          <div className="h-10 rounded bg-white/6"></div>
+          <div className="h-10 rounded bg-white/6"></div>
         </div>
       </div>
     );
@@ -334,36 +334,36 @@ export default function LLMSettings() {
   const statusClasses = statusDisplay.bgClass.split(' ');
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="glass-panel rounded-[32px] p-6">
       {/* Header */}
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <svg className="w-5 h-5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-100">
+          <svg className="h-5 w-5 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
           {messages.llmSettings.title}
         </h3>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="mt-1 text-sm text-slate-400">
           {messages.llmSettings.subtitle}
         </p>
       </div>
 
       {/* Status Line */}
-      <div className={`mb-6 p-3 ${statusClasses[0]} border ${statusClasses[1]} rounded-lg flex items-center gap-3`}>
+      <div className="mb-6 flex items-center gap-3 rounded-[20px] border border-white/10 bg-white/[0.04] p-3">
         <div className={statusClasses[3]}>{statusDisplay.icon}</div>
         <div>
-          <p className={`text-sm font-medium ${statusClasses[2]}`}>{statusDisplay.text}</p>
-          <p className={`text-xs ${statusClasses[2]} opacity-80`}>{statusDisplay.subtext}</p>
+          <p className="text-sm font-medium text-slate-100">{statusDisplay.text}</p>
+          <p className="text-xs text-slate-400">{statusDisplay.subtext}</p>
         </div>
       </div>
 
       <div className="space-y-5">
         {/* API Key Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{messages.llmSettings.fields.apiKey.label}</label>
-          <p className="text-xs text-gray-500 mb-2">
+          <label className="field-label">{messages.llmSettings.fields.apiKey.label}</label>
+          <p className="field-help">
             {messages.llmSettings.fields.apiKey.description}{' '}
-            <span className="text-primary-600">platform.deepseek.com</span>
+            <span className="text-sky-300">platform.deepseek.com</span>
           </p>
           <div className="relative">
             <input
@@ -371,31 +371,29 @@ export default function LLMSettings() {
               value={state.apiKey}
               onChange={(e) => updateField('apiKey', e.target.value)}
               placeholder={messages.llmSettings.fields.apiKey.placeholder}
-              className={`w-full px-3 py-2 pr-16 border rounded-lg text-sm font-mono ${
-                state.validationErrors.apiKey ? 'border-red-300' : 'border-gray-300'
-              } focus:outline-none focus:ring-2 focus:ring-primary-500`}
+              className={`field-dark pr-16 font-mono ${state.validationErrors.apiKey ? 'border-rose-300/40' : ''}`}
             />
             <button
               type="button"
               onClick={() => updateField('showApiKey', !state.showApiKey)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs text-slate-400 hover:text-slate-200"
             >
               {state.showApiKey ? messages.actions.hide : messages.actions.show}
             </button>
           </div>
           {state.validationErrors.apiKey && (
-            <p className="text-xs text-red-500 mt-1">{state.validationErrors.apiKey}</p>
+            <p className="mt-1 text-xs text-rose-300">{state.validationErrors.apiKey}</p>
           )}
         </div>
 
         {/* Model Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{messages.llmSettings.fields.model.label}</label>
-          <p className="text-xs text-gray-500 mb-2">{messages.llmSettings.fields.model.description}</p>
+          <label className="field-label">{messages.llmSettings.fields.model.label}</label>
+          <p className="field-help">{messages.llmSettings.fields.model.description}</p>
           <select
             value={state.model}
             onChange={(e) => updateField('model', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="field-dark"
           >
             {AVAILABLE_MODELS.map((model) => (
               <option key={model.value} value={model.value}>
@@ -407,10 +405,10 @@ export default function LLMSettings() {
 
         {/* Temperature Slider */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="field-label">
             {messages.llmSettings.fields.temperature.label}: {state.temperature.toFixed(1)}
           </label>
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="field-help">
             {messages.llmSettings.fields.temperature.description}
           </p>
           <input
@@ -420,23 +418,23 @@ export default function LLMSettings() {
             step="0.1"
             value={state.temperature}
             onChange={(e) => updateField('temperature', parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
+            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-sky-300"
           />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <div className="mt-1 flex justify-between text-xs text-slate-500">
             <span>{messages.llmSettings.fields.temperature.low}</span>
             <span>{messages.llmSettings.fields.temperature.high}</span>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-100">
+        <div className="flex flex-wrap gap-3 border-t border-white/8 pt-4">
           <button
             onClick={handleSave}
             disabled={state.isLoading || !state.isDirty}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`text-sm font-medium ${
               state.isDirty
-                ? 'bg-primary-500 text-white hover:bg-primary-600'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'button-primary-dark'
+                : 'button-secondary-dark opacity-50 cursor-not-allowed'
             }`}
           >
             {messages.actions.saveSettings}
@@ -445,14 +443,14 @@ export default function LLMSettings() {
           <button
             onClick={handleTestConnection}
             disabled={state.isLoading || state.testResult === 'testing' || !state.apiKey}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="button-secondary-dark disabled:cursor-not-allowed disabled:opacity-50"
           >
             {state.testResult === 'testing' ? messages.actions.testing : messages.actions.testConnection}
           </button>
 
           <button
             onClick={handleReset}
-            className="px-4 py-2 text-gray-500 text-sm font-medium hover:text-gray-700 transition-colors"
+            className="button-ghost-dark"
           >
             {messages.actions.resetToDefault}
           </button>
@@ -460,7 +458,7 @@ export default function LLMSettings() {
           {state.hasSavedKey && (
             <button
               onClick={handleRemoveKey}
-              className="px-4 py-2 text-red-600 text-sm font-medium hover:text-red-700 transition-colors"
+              className="button-danger-dark"
             >
               {messages.actions.removeApiKey}
             </button>
@@ -469,22 +467,22 @@ export default function LLMSettings() {
       </div>
 
       {/* Help Section */}
-      <div className="mt-6 pt-4 border-t border-gray-100">
+      <div className="mt-6 border-t border-white/8 pt-4">
         <details className="group">
-          <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-1">
+          <summary className="flex cursor-pointer items-center gap-1 text-sm text-slate-400 hover:text-slate-200">
             <svg className="w-4 h-4 transform group-open:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             {messages.llmSettings.help.title}
           </summary>
-          <div className="mt-3 text-sm text-gray-600 space-y-2 pl-5">
-            <p className="font-medium">{messages.llmSettings.help.gettingKey}</p>
+          <div className="mt-3 space-y-2 pl-5 text-sm text-slate-300">
+            <p className="font-medium text-slate-100">{messages.llmSettings.help.gettingKey}</p>
             <ol className="list-decimal list-inside space-y-1 ml-2">
               {messages.llmSettings.help.gettingKeySteps.map((step, i) => (
                 <li key={i}>{step}</li>
               ))}
             </ol>
-            <p className="font-medium mt-3">{messages.llmSettings.help.troubleshooting}</p>
+            <p className="mt-3 font-medium text-slate-100">{messages.llmSettings.help.troubleshooting}</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
               {messages.llmSettings.help.troubleshootingSteps.map((step, i) => (
                 <li key={i}>{step}</li>

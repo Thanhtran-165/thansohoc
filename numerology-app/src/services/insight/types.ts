@@ -160,6 +160,24 @@ export interface InterpretationBlueprint {
     emphasis_order: string[];
     do_not_overweight: InterpretationForce['source'][];
   };
+  meta_methodology: {
+    primary_system: {
+      id: 'pythagorean_daily_stack';
+      label: string;
+      rationale: string;
+    };
+    supporting_lenses: Array<{
+      id: 'essence_transits' | 'lo_shu_birth_chart' | 'name_variants';
+      label: string;
+      role: 'contextual' | 'tempering' | 'identity';
+      include_in_daily_report: boolean;
+      rationale: string;
+      contribution: string;
+      caution: string;
+    }>;
+    synthesis_rule: string;
+    dilution_guardrail: string;
+  };
   methodology_notes: string[];
 }
 
@@ -205,6 +223,89 @@ export interface NumerologyContext {
       number: number;
       from_age: number;
       to_age: number | null;
+    };
+  };
+  extended: {
+    transits: {
+      methodology: 'pythagorean_name_transits';
+      current_age: number;
+      current_year: number;
+      current: {
+        year: number;
+        age: number;
+        letters: Array<{
+          source: 'leading_name' | 'middle_name' | 'ending_name';
+          label: string;
+          letter: string;
+          value: number;
+          from_age: number;
+          to_age: number;
+        }>;
+        essence_compound: number;
+        essence_number: number;
+      };
+      next_years: Array<{
+        year: number;
+        age: number;
+        letters: Array<{
+          source: 'leading_name' | 'middle_name' | 'ending_name';
+          label: string;
+          letter: string;
+          value: number;
+          from_age: number;
+          to_age: number;
+        }>;
+        essence_compound: number;
+        essence_number: number;
+      }>;
+    };
+    lo_shu: {
+      methodology: 'lo_shu';
+      grid: Record<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, number>;
+      driver_number: number;
+      conductor_number: number;
+      present_arrows: Array<{
+        id: string;
+        numbers: [1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9];
+        kind: 'present' | 'missing';
+        label: string;
+        meaning: string;
+      }>;
+      missing_arrows: Array<{
+        id: string;
+        numbers: [1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9];
+        kind: 'present' | 'missing';
+        label: string;
+        meaning: string;
+      }>;
+      dominant_digits: Array<{ digit: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9; count: number }>;
+      absent_digits: Array<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9>;
+    };
+    name_variants: {
+      birth_name: string;
+      current_name: string;
+      differs: boolean;
+      pythagorean_birth: {
+        label: string;
+        raw_total: number;
+        reduced: number;
+      };
+      pythagorean_current: {
+        label: string;
+        raw_total: number;
+        reduced: number;
+      };
+      chaldean_birth: {
+        label: string;
+        raw_total: number;
+        reduced: number;
+      };
+      chaldean_current: {
+        label: string;
+        raw_total: number;
+        reduced: number;
+      };
+      dominant_shift: string;
     };
   };
 }
@@ -457,7 +558,7 @@ export const RETRY_DELAYS = [2000, 5000, 10000];
 
 // Default schema version
 export const SCHEMA_VERSION = '1.0';
-export const PROMPT_VERSION = '2.0.1';
+export const PROMPT_VERSION = '2.1.0';
 export const FALLBACK_PROMPT_VERSION = 'fallback-1.5.0';
 
 // Fallback templates for Personal Day themes

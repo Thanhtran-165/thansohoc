@@ -16,20 +16,20 @@ const getBadgeConfig = (type: ClaimType) => {
   const configs = {
     calculated: {
       label: messages.claimTypes.calculated,
-      bgColor: 'bg-emerald-100',
-      textColor: 'text-emerald-700',
+      bgColor: 'bg-emerald-400/12 border border-emerald-300/20',
+      textColor: 'text-emerald-200',
       icon: '≡',
     },
     interpreted: {
       label: messages.claimTypes.interpreted,
-      bgColor: 'bg-blue-100',
-      textColor: 'text-blue-700',
+      bgColor: 'bg-sky-400/12 border border-sky-300/20',
+      textColor: 'text-sky-200',
       icon: '~',
     },
     exploratory: {
       label: messages.claimTypes.exploratory,
-      bgColor: 'bg-purple-100',
-      textColor: 'text-purple-700',
+      bgColor: 'bg-violet-400/12 border border-violet-300/20',
+      textColor: 'text-violet-200',
       icon: '?',
     },
   };
@@ -42,7 +42,7 @@ export function ClaimBadge({ type, confidence, compact = false }: ClaimBadgeProp
   if (compact) {
     return (
       <span
-        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.bgColor} ${config.textColor}`}
+        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${config.bgColor} ${config.textColor}`}
         title={`${config.label}${confidence !== null && confidence !== undefined ? ` (${(confidence * 100).toFixed(0)}% ${messages.claimTypes.confidence})` : ''}`}
       >
         {config.icon} {config.label}
@@ -52,7 +52,7 @@ export function ClaimBadge({ type, confidence, compact = false }: ClaimBadgeProp
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${config.bgColor} ${config.textColor}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${config.bgColor} ${config.textColor}`}
     >
       <span className="font-bold">{config.icon}</span>
       <span>{config.label}</span>

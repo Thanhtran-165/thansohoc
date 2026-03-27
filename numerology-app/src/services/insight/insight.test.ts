@@ -161,7 +161,99 @@ function createInterpretationFixture() {
       emphasis_order: ['Mở bằng đổi nhịp', 'Đặt nền bằng chăm lo'],
       do_not_overweight: ['karmic_lesson' as const, 'karmic_debt' as const, 'hidden_passion' as const],
     },
+    meta_methodology: {
+      primary_system: {
+        id: 'pythagorean_daily_stack' as const,
+        label: 'Pythagorean daily stack',
+        rationale: 'Daily report được neo vào daily stack.',
+      },
+      supporting_lenses: [
+        {
+          id: 'essence_transits' as const,
+          label: 'Essence và transits',
+          role: 'contextual' as const,
+          include_in_daily_report: true,
+          rationale: 'Essence hiện tại đang cùng nhịp với ngày.',
+          contribution: 'Nối ngày hôm nay với một chu kỳ dài hơn.',
+          caution: 'Không được lấn vai personal day.',
+        },
+        {
+          id: 'lo_shu_birth_chart' as const,
+          label: 'Lo Shu và biểu đồ mũi tên',
+          role: 'tempering' as const,
+          include_in_daily_report: false,
+          rationale: 'Không đủ mạnh để kéo lên báo cáo ngày.',
+          contribution: 'Chỉ giữ như nền tính khí.',
+          caution: 'Không được dùng làm trục chính.',
+        },
+      ],
+      synthesis_rule: 'Bắt đầu từ daily stack rồi mới kéo thêm lens phụ nếu cần.',
+      dilution_guardrail: 'Không dùng lens phụ nếu nó chỉ lặp lại điều đã có.',
+    },
     methodology_notes: ['Ưu tiên đọc theo thứ tự: personal day -> personal month.'],
+  };
+}
+
+function createExtendedNumerologyFixture() {
+  return {
+    transits: {
+      methodology: 'pythagorean_name_transits' as const,
+      current_age: 36,
+      current_year: 2026,
+      current: {
+        year: 2026,
+        age: 36,
+        letters: [
+          {
+            source: 'leading_name' as const,
+            label: 'Tên chính',
+            letter: 't',
+            value: 2,
+            from_age: 36,
+            to_age: 39,
+          },
+        ],
+        essence_compound: 14,
+        essence_number: 5,
+      },
+      next_years: [],
+    },
+    lo_shu: {
+      methodology: 'lo_shu' as const,
+      grid: { 1: 1, 2: 0, 3: 2, 4: 1, 5: 1, 6: 1, 7: 0, 8: 1, 9: 1 },
+      driver_number: 6,
+      conductor_number: 3,
+      present_arrows: [
+        {
+          id: '1-5-9',
+          numbers: [1, 5, 9] as [1, 5, 9],
+          kind: 'present' as const,
+          label: 'mũi tên quyết tâm',
+          meaning: 'ý chí rõ ràng',
+        },
+      ],
+      missing_arrows: [
+        {
+          id: '2-5-8',
+          numbers: [2, 5, 8] as [2, 5, 8],
+          kind: 'missing' as const,
+          label: 'mũi tên cảm xúc',
+          meaning: 'dễ nén cảm xúc',
+        },
+      ],
+      dominant_digits: [{ digit: 3 as const, count: 2 }],
+      absent_digits: [2, 7] as Array<2 | 7>,
+    },
+    name_variants: {
+      birth_name: 'Tran Dinh Thanh',
+      current_name: 'Dinh Thanh',
+      differs: true,
+      pythagorean_birth: { label: 'Tên khai sinh', raw_total: 46, reduced: 1 },
+      pythagorean_current: { label: 'Tên đang dùng', raw_total: 28, reduced: 1 },
+      chaldean_birth: { label: 'Tên khai sinh', raw_total: 31, reduced: 4 },
+      chaldean_current: { label: 'Tên đang dùng', raw_total: 23, reduced: 5 },
+      dominant_shift: 'Tên đang dùng làm lớp biểu đạt linh hoạt hơn tên khai sinh.',
+    },
   };
 }
 
@@ -175,6 +267,7 @@ function createInsightRequestFixture() {
     soul_urge: 6,
     birthday_number: 5,
     advanced: createAdvancedNumerologyFixture(),
+    extended: createExtendedNumerologyFixture(),
   }, {
     name: 'Tran Dinh Thanh',
     style_preference: 'practical',
@@ -207,6 +300,7 @@ describe('Prompt Builder', () => {
       soul_urge: 3,
       birthday_number: 6,
       advanced: createAdvancedNumerologyFixture(),
+      extended: createExtendedNumerologyFixture(),
     }, {
       interpretation: createInterpretationFixture(),
     });
@@ -232,6 +326,7 @@ describe('Prompt Builder', () => {
         soul_urge: 6,
         birthday_number: 5,
         advanced: createAdvancedNumerologyFixture(),
+        extended: createExtendedNumerologyFixture(),
       },
       {
         name: 'Jane Doe',
@@ -260,6 +355,7 @@ describe('Prompt Builder', () => {
       soul_urge: 1,
       birthday_number: 1,
       advanced: createAdvancedNumerologyFixture(),
+      extended: createExtendedNumerologyFixture(),
     }, {
       interpretation: createInterpretationFixture(),
     });
@@ -275,11 +371,13 @@ describe('Prompt Builder', () => {
     expect(userMessage).toContain('"primary_force"');
     expect(userMessage).toContain('"report_archetype"');
     expect(userMessage).toContain('"conflict_grammar"');
+    expect(userMessage).toContain('"meta_methodology"');
     expect(systemPrompt).toContain('"presentation"');
     expect(systemPrompt).toContain('"energy_map"');
     expect(systemPrompt).toContain('"practical_guidance"');
     expect(systemPrompt).toContain('translate the reading into concrete daily use');
     expect(systemPrompt).toContain('## PRESENTATION BLOCKS');
+    expect(systemPrompt).toContain('supporting_lenses are optional');
   });
 
   it('should build blueprint stage prompt with narrow stage schema', () => {
@@ -397,6 +495,7 @@ describe('Interpretation Engine', () => {
       soul_urge: 6,
       birthday_number: 5,
       advanced: createAdvancedNumerologyFixture(),
+      extended: createExtendedNumerologyFixture(),
     });
 
     expect(blueprint.pattern.id).toBe('movement_with_responsibility');
@@ -933,6 +1032,7 @@ describe('Insight Pipeline Integration', () => {
       soul_urge: 3,
       birthday_number: 8,
       advanced: createAdvancedNumerologyFixture(),
+      extended: createExtendedNumerologyFixture(),
     };
 
     const request = createInsightRequest('test-user', numerologyContext, {

@@ -3,17 +3,18 @@
  * Editorial-style daily report presentation.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DailyInsight, InsightPresentationBlocks } from '@/types';
 import { FeedbackUI } from './FeedbackUI';
 import { useUserStore } from '@stores/userStore';
 import messages from '@localization';
 import { trackEvent } from '@services/analytics';
-import { getPracticeSummary, getRecentPracticeContext } from '@services/dailyPractice';
+import { DayOrbitMap, ForceFieldMap } from '@components/observatory/ObservatoryVisuals';
 
 interface InsightCardProps {
   insight: DailyInsight;
   showFeedback?: boolean;
+  mode?: 'full' | 'reading';
 }
 
 type NarrativeSectionModel = {
@@ -26,6 +27,20 @@ type NarrativeSectionModel = {
 };
 
 type PracticalGuidanceItem = InsightPresentationBlocks['practical_guidance'][number];
+
+export interface InsightDisplayModel {
+  openingSummary: string;
+  narrativeSections: NarrativeSectionModel[];
+  energySignals: Array<{
+    label: string;
+    intensity: 1 | 2 | 3 | 4 | 5;
+    meaning: string;
+  }>;
+  practicalGuidance: PracticalGuidanceItem[];
+  decisionCompass?: InsightPresentationBlocks['decision_compass'];
+  numerologyNumbers: Array<{ label: string; value: number }>;
+  presentation?: InsightPresentationBlocks;
+}
 
 const SECTION_BLUEPRINTS: Array<{
   eyebrow?: string;
@@ -42,6 +57,7 @@ const SECTION_BLUEPRINTS: Array<{
 export function InsightCard({
   insight,
   showFeedback = true,
+  mode = 'full',
 }: InsightCardProps) {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const { profile } = useUserStore();
@@ -59,71 +75,92 @@ export function InsightCard({
     });
   }, [insight.id, insight.date, insight.theme, profile?.id]);
 
-  const currentLayer = insight.layers.deep ?? insight.layers.standard;
-  const presentation = insight.presentation;
+  const displayModel = buildInsightDisplayModel(insight);
+  const {
+    openingSummary: modelOpeningSummary,
+    narrativeSections: modelNarrativeSections,
+    energySignals: modelEnergySignals,
+    practicalGuidance: modelPracticalGuidance,
+    decisionCompass: modelDecisionCompass,
+    numerologyNumbers: modelNumerologyNumbers,
+    presentation: modelPresentation,
+  } = displayModel;
 
-  const openingSummary = useMemo(
-    () => stripClaimMarkers(insight.layers.quick.content),
-    [insight.layers.quick.content]
-  );
+  if (mode === 'reading') {
+    return (
+      <article className="glass-panel motion-sheen overflow-hidden rounded-[38px] border-white/10 bg-slate-950/34 shadow-[0_24px_90px_rgba(2,6,23,0.34)]">
+        <div className="space-y-8 px-6 py-8 sm:px-8">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_320px]">
+            <div className="space-y-8">
+              <GuidedReadingPanel sections={modelNarrativeSections} />
+              {modelPresentation?.closing_signal && (
+                <ClosingReflection closingSignal={modelPresentation.closing_signal} />
+              )}
+            </div>
 
-  const narrativeSections = useMemo(() => {
-    const paragraphs = filterRedundantParagraphs(
-      splitIntoParagraphs(currentLayer.content),
-      openingSummary
+            <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+              {modelDecisionCompass && (
+                <TensionMapPanel decisionCompass={modelDecisionCompass} />
+              )}
+              <TodayRhythmPanel numbers={modelNumerologyNumbers} signals={modelEnergySignals} compact />
+            </aside>
+          </div>
+        </div>
+
+        <footer className="border-t border-white/10 bg-white/[0.04] px-6 py-5 sm:px-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              {showFeedback && !feedbackSubmitted && profile?.id && (
+                <FeedbackUI
+                  insightId={insight.id}
+                  userId={profile.id}
+                  onSubmitted={() => setFeedbackSubmitted(true)}
+                />
+              )}
+
+              {feedbackSubmitted && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/12 px-4 py-2 text-sm font-medium text-emerald-200 ring-1 ring-emerald-300/20 backdrop-blur-xl">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {messages.insight.feedbackReceived}
+                </span>
+              )}
+            </div>
+          </div>
+        </footer>
+      </article>
     );
-    return buildNarrativeSections(paragraphs, presentation?.narrative_beats);
-  }, [currentLayer.content, openingSummary, presentation?.narrative_beats]);
-
-  const energySignals = useMemo(
-    () => buildEnergySignals(presentation),
-    [presentation]
-  );
-  const practicalGuidance = presentation?.practical_guidance ?? [];
-  const decisionCompass = presentation?.decision_compass;
-  const practiceContext = useMemo(
-    () => (profile?.id ? getRecentPracticeContext(profile.id) : null),
-    [profile?.id, insight.id]
-  );
-  const practiceSummary = useMemo(
-    () => (profile?.id ? getPracticeSummary(profile.id) : null),
-    [profile?.id, insight.id]
-  );
-
-  const numerologyNumbers = [
-    { label: messages.dashboard.numerology.personalDay, value: insight.personal_day },
-    { label: messages.dashboard.numerology.personalMonth, value: insight.personal_month },
-    { label: messages.dashboard.numerology.personalYear, value: insight.personal_year },
-  ];
+  }
 
   return (
-    <article className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_24px_90px_rgba(15,23,42,0.08)]">
-      <header className="relative overflow-hidden border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(56,189,248,0.18),_transparent_24%),linear-gradient(180deg,_#fffdf8_0%,_#ffffff_65%,_#f8fbff_100%)] px-6 py-8 sm:px-8 sm:py-10">
+      <article className="glass-panel motion-sheen overflow-hidden rounded-[38px] border-white/10 bg-slate-950/34 shadow-[0_24px_90px_rgba(2,6,23,0.34)]">
+      <header className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.14),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(56,189,248,0.14),_transparent_24%),linear-gradient(180deg,_rgba(15,23,42,0.26)_0%,_rgba(15,23,42,0.12)_65%,_rgba(15,23,42,0.06)_100%)] px-6 py-8 sm:px-8 sm:py-10">
         <div className="relative max-w-4xl">
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-slate-500 ring-1 ring-slate-200">
+            <span className="rounded-full bg-white/8 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-slate-300 ring-1 ring-white/10 backdrop-blur-xl">
               {formatLongDate(insight.date)}
             </span>
             {insight.is_fallback && (
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+              <span className="rounded-full bg-amber-400/12 px-3 py-1 text-xs font-medium text-amber-200 ring-1 ring-amber-300/20 backdrop-blur-xl">
                 {messages.insight.cached}
               </span>
             )}
           </div>
 
-          <h2 className="mt-4 max-w-4xl font-serif text-4xl leading-[1.08] text-slate-950 sm:text-5xl">
+          <h2 className="mt-4 max-w-4xl text-4xl font-medium leading-[1.08] text-slate-50 sm:text-5xl">
             {insight.headline}
           </h2>
 
-          <p className="mt-6 max-w-3xl text-lg leading-9 text-slate-700 sm:text-xl">
-            {openingSummary}
+          <p className="mt-6 max-w-3xl text-lg leading-9 text-slate-200 sm:text-xl">
+            {modelOpeningSummary}
           </p>
 
-          {presentation?.visual_scene && (
+          {modelPresentation?.visual_scene && (
             <div className="mt-8 grid gap-3 md:grid-cols-3">
-              <SceneChip label="Không khí chung" value={presentation.visual_scene.atmosphere} />
-              <SceneChip label="Nhịp di chuyển" value={presentation.visual_scene.movement} />
-              <SceneChip label="Điều nên giữ" value={presentation.visual_scene.focal_point} />
+              <SceneChip label="Không khí chung" value={modelPresentation.visual_scene.atmosphere} />
+              <SceneChip label="Nhịp di chuyển" value={modelPresentation.visual_scene.movement} />
+              <SceneChip label="Điều nên giữ" value={modelPresentation.visual_scene.focal_point} />
             </div>
           )}
         </div>
@@ -132,43 +169,34 @@ export function InsightCard({
       <div className="space-y-8 px-6 py-8 sm:px-8">
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_320px]">
           <div className="space-y-8">
-            <TodayRhythmPanel numbers={numerologyNumbers} signals={energySignals} />
+            <TodayRhythmPanel numbers={modelNumerologyNumbers} signals={modelEnergySignals} />
 
-            {practicalGuidance.length > 0 && (
+            {modelPracticalGuidance.length > 0 && (
               <PracticalFocusPanel
-                items={practicalGuidance}
+                items={modelPracticalGuidance}
               />
             )}
 
-            {narrativeSections.length > 0 && (
+            {modelNarrativeSections.length > 0 && (
               <GuidedReadingPanel
-                sections={narrativeSections}
+                sections={modelNarrativeSections}
               />
             )}
 
-            {presentation?.closing_signal && (
-              <ClosingReflection closingSignal={presentation.closing_signal} />
+            {modelPresentation?.closing_signal && (
+              <ClosingReflection closingSignal={modelPresentation.closing_signal} />
             )}
           </div>
 
           <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
-            {decisionCompass && (
-              <TensionMapPanel decisionCompass={decisionCompass} signals={energySignals} />
-            )}
-            {practiceContext && (
-              <ContinuityThreadPanel
-                context={practiceContext}
-                summary={practiceSummary}
-              />
-            )}
-            {narrativeSections.length > 0 && (
-              <ReadingPathPanel sections={narrativeSections} />
+            {modelDecisionCompass && (
+              <TensionMapPanel decisionCompass={modelDecisionCompass} />
             )}
           </aside>
         </div>
       </div>
 
-      <footer className="border-t border-slate-100 bg-slate-50/70 px-6 py-5 sm:px-8">
+      <footer className="border-t border-white/10 bg-white/[0.04] px-6 py-5 sm:px-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             {showFeedback && !feedbackSubmitted && profile?.id && (
@@ -180,7 +208,7 @@ export function InsightCard({
             )}
 
             {feedbackSubmitted && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200">
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/12 px-4 py-2 text-sm font-medium text-emerald-200 ring-1 ring-emerald-300/20 backdrop-blur-xl">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
@@ -192,6 +220,34 @@ export function InsightCard({
       </footer>
     </article>
   );
+}
+
+export function buildInsightDisplayModel(insight: DailyInsight): InsightDisplayModel {
+  const currentLayer = insight.layers.deep ?? insight.layers.standard;
+  const presentation = insight.presentation;
+  const openingSummary = stripClaimMarkers(insight.layers.quick.content);
+  const narrativeSections = buildNarrativeSections(
+    filterRedundantParagraphs(splitIntoParagraphs(currentLayer.content), openingSummary),
+    presentation?.narrative_beats
+  );
+  const energySignals = buildEnergySignals(presentation);
+  const practicalGuidance = presentation?.practical_guidance ?? [];
+  const decisionCompass = presentation?.decision_compass;
+  const numerologyNumbers = [
+    { label: messages.dashboard.numerology.personalDay, value: insight.personal_day },
+    { label: messages.dashboard.numerology.personalMonth, value: insight.personal_month },
+    { label: messages.dashboard.numerology.personalYear, value: insight.personal_year },
+  ];
+
+  return {
+    openingSummary,
+    narrativeSections,
+    energySignals,
+    practicalGuidance,
+    decisionCompass,
+    numerologyNumbers,
+    presentation,
+  };
 }
 
 function buildNarrativeSections(
@@ -291,20 +347,20 @@ function NarrativeSection({
   isLead: boolean;
 }) {
   const accentClasses: Record<NarrativeSectionModel['accent'], string> = {
-    warm: 'bg-[linear-gradient(180deg,_#fffaf3_0%,_#ffffff_100%)] border-amber-100',
-    sky: 'bg-[linear-gradient(180deg,_#f8fcff_0%,_#ffffff_100%)] border-sky-100',
-    ink: 'bg-[linear-gradient(180deg,_#f7f8fb_0%,_#ffffff_100%)] border-slate-200',
-    rose: 'bg-[linear-gradient(180deg,_#fff8fb_0%,_#ffffff_100%)] border-rose-100',
+    warm: 'border-amber-400/12 bg-[linear-gradient(180deg,_rgba(251,191,36,0.08)_0%,_rgba(15,23,42,0.02)_100%)]',
+    sky: 'border-sky-400/12 bg-[linear-gradient(180deg,_rgba(56,189,248,0.08)_0%,_rgba(15,23,42,0.02)_100%)]',
+    ink: 'border-white/10 bg-[linear-gradient(180deg,_rgba(148,163,184,0.06)_0%,_rgba(15,23,42,0.02)_100%)]',
+    rose: 'border-rose-400/12 bg-[linear-gradient(180deg,_rgba(251,113,133,0.08)_0%,_rgba(15,23,42,0.02)_100%)]',
   };
 
   return (
-    <section id={section.id} className={`scroll-mt-24 rounded-[30px] border p-6 shadow-[0_16px_45px_rgba(15,23,42,0.05)] sm:p-8 ${accentClasses[section.accent]}`}>
+    <section id={section.id} className={`glass-panel elevate-hover drift-slow scroll-mt-24 rounded-[30px] border p-6 sm:p-8 ${accentClasses[section.accent]}`}>
       {section.eyebrow && (
-        <div className="text-sm font-medium text-slate-500">
+        <div className="text-sm font-medium text-slate-400">
           {section.eyebrow}
         </div>
       )}
-      <h3 className={`mt-4 font-serif text-slate-950 ${isLead ? 'text-3xl leading-[1.15]' : 'text-2xl leading-[1.2]'}`}>
+      <h3 className={`mt-4 font-medium text-slate-50 ${isLead ? 'text-3xl leading-[1.15]' : 'text-2xl leading-[1.2]'}`}>
         {section.title}
       </h3>
       <div className="mt-5 space-y-5">
@@ -312,8 +368,8 @@ function NarrativeSection({
           <p
             key={`${section.title}-${index}`}
             className={isLead && index === 0
-              ? 'text-xl leading-9 text-slate-700'
-              : 'text-[15px] leading-8 text-slate-700'}
+              ? 'text-xl leading-9 text-slate-200'
+              : 'text-[15px] leading-8 text-slate-300'}
           >
             {paragraph}
           </p>
@@ -323,183 +379,18 @@ function NarrativeSection({
   );
 }
 
-function TensionMapPanel({
+export function TensionMapPanel({
   decisionCompass,
-  signals,
 }: {
   decisionCompass: InsightPresentationBlocks['decision_compass'];
-  signals: Array<{
-    label: string;
-    intensity: 1 | 2 | 3 | 4 | 5;
-    meaning: string;
-  }>;
 }) {
-  const strongestSignal = signals[0];
-
   return (
-    <section className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_#fffdf8_0%,_#ffffff_100%)] p-5 shadow-[0_14px_35px_rgba(15,23,42,0.05)]">
-      <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-500">
+    <section className="glass-panel motion-panel-float rounded-[28px] p-5">
+      <div className="type-chip-label">
         Bản đồ lực của ngày
       </div>
-      <div className="mt-4 space-y-3">
-        <CompassRow label="Đi theo" value={decisionCompass.lean_in} tone="sky" />
-        <CompassRow label="Giữ vững" value={decisionCompass.hold_steady} tone="warm" />
-        <CompassRow label="Đừng ép" value={decisionCompass.avoid_force} tone="ink" />
-      </div>
-
-      {strongestSignal && (
-        <div className="mt-5 rounded-[22px] border border-slate-200 bg-white p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-medium text-slate-900">Lực nổi rõ nhất</div>
-            <SignalDots intensity={strongestSignal.intensity} />
-          </div>
-          <div className="mt-3 text-base font-medium text-slate-900">{strongestSignal.label}</div>
-          <p className="mt-2 text-sm leading-7 text-slate-600">{strongestSignal.meaning}</p>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function CompassRow({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: 'warm' | 'sky' | 'ink';
-}) {
-  const toneClass = {
-    warm: 'bg-amber-50 border-amber-100',
-    sky: 'bg-sky-50 border-sky-100',
-    ink: 'bg-slate-50 border-slate-200',
-  }[tone];
-
-  return (
-    <div className={`rounded-[20px] border p-4 ${toneClass}`}>
-      <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">{label}</div>
-      <div className="mt-2 text-sm leading-7 text-slate-700">{value}</div>
-    </div>
-  );
-}
-
-function ContinuityThreadPanel({
-  context,
-  summary,
-}: {
-  context: ReturnType<typeof getRecentPracticeContext>;
-  summary: ReturnType<typeof getPracticeSummary> | null;
-}) {
-  return (
-    <section className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_#f8fbff_0%,_#ffffff_100%)] p-5 shadow-[0_14px_35px_rgba(15,23,42,0.05)]">
-      <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-500">
-        Mạch riêng của bạn
-      </div>
-
-      {context.continuity_note && (
-        <p className="mt-4 text-sm leading-7 text-slate-700">{context.continuity_note}</p>
-      )}
-
-      <div className="mt-4 grid gap-3 grid-cols-2">
-        <MetricChip label="Chuỗi hiện tại" value={`${context.current_streak}`} />
-        <MetricChip label="Đã mở 7 ngày" value={`${context.viewed_days_last_7}/${Math.max(context.report_days_last_7, 1)}`} />
-      </div>
-
-      {context.theme_shift && (
-        <div className="mt-4 rounded-[20px] border border-slate-200 bg-white p-4">
-          <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Nhịp đang đổi</div>
-          <p className="mt-2 text-sm leading-7 text-slate-700">{context.theme_shift}</p>
-        </div>
-      )}
-
-      {context.recurring_themes.length > 0 && (
-        <div className="mt-4 rounded-[20px] border border-slate-200 bg-white p-4">
-          <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Chủ đề trở lại</div>
-          <div className="mt-3 space-y-3">
-            {context.recurring_themes.map((item) => (
-              <div key={item.theme}>
-                <div className="flex items-center justify-between gap-3 text-sm text-slate-700">
-                  <span>{item.theme}</span>
-                  <span>{item.count} lần</span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-[linear-gradient(90deg,_#38bdf8_0%,_#f59e0b_100%)]"
-                    style={{ width: `${Math.min(100, item.count * 33)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {context.recent_numbers.length > 0 && (
-        <div className="mt-4 rounded-[20px] border border-slate-200 bg-white p-4">
-          <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Dòng nhịp gần đây</div>
-          <div className="mt-3 space-y-3">
-            {context.recent_numbers.map((item) => (
-              <div key={item.date} className="flex items-center justify-between gap-4 text-sm text-slate-700">
-                <span>{formatShortDate(item.date)}</span>
-                <span className="rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
-                  {item.personal_day}/{item.personal_month}/{item.personal_year}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {summary?.dominant_theme_last_7 && (
-        <p className="mt-4 text-xs leading-6 text-slate-500">
-          Mạch rõ nhất 7 ngày gần đây: {summary.dominant_theme_last_7}
-        </p>
-      )}
-    </section>
-  );
-}
-
-function MetricChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[18px] border border-slate-200 bg-white p-4">
-      <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">{label}</div>
-      <div className="mt-2 text-lg font-semibold text-slate-900">{value}</div>
-    </div>
-  );
-}
-
-function ReadingPathPanel({
-  sections,
-}: {
-  sections: NarrativeSectionModel[];
-}) {
-  return (
-    <section className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_#fff8fb_0%,_#ffffff_100%)] p-5 shadow-[0_14px_35px_rgba(15,23,42,0.05)]">
-      <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-500">
-        Đường đọc hôm nay
-      </div>
-      <div className="mt-4 space-y-3">
-        {sections.map((section, index) => (
-          <button
-            key={section.id}
-            type="button"
-            onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="w-full rounded-[18px] border border-slate-200 bg-white p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-950 text-xs font-medium text-white">
-                {index + 1}
-              </span>
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-slate-900">{section.title}</div>
-                {section.summary && (
-                  <div className="mt-1 text-xs leading-5 text-slate-500">{section.summary}</div>
-                )}
-              </div>
-            </div>
-          </button>
-        ))}
+      <div className="mt-4">
+        <ForceFieldMap decisionCompass={decisionCompass} />
       </div>
     </section>
   );
@@ -515,29 +406,23 @@ function slugify(value: string): string {
     .slice(0, 40);
 }
 
-function formatShortDate(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-  });
-}
-
-function SceneChip({ label, value }: { label: string; value: string }) {
+export function SceneChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-slate-200 bg-white/80 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-      <div className="text-sm font-medium text-slate-500">
+    <div className="glass-card-strong motion-panel-float-delayed elevate-hover rounded-[20px] p-4">
+      <div className="type-chip-label">
         {label}
       </div>
-      <div className="mt-2 text-sm leading-6 text-slate-700">
+      <div className="mt-2 text-sm leading-6 text-slate-200">
         {value}
       </div>
     </div>
   );
 }
 
-function TodayRhythmPanel({
+export function TodayRhythmPanel({
   numbers,
   signals,
+  compact = false,
 }: {
   numbers: Array<{ label: string; value: number }>;
   signals: Array<{
@@ -545,11 +430,35 @@ function TodayRhythmPanel({
     intensity: 1 | 2 | 3 | 4 | 5;
     meaning: string;
   }>;
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <section className="glass-panel motion-sheen motion-panel-float rounded-[28px] p-5">
+        <div className="type-eyebrow">
+          Ba con số hôm nay
+        </div>
+        <div className="mt-4">
+          <DayOrbitMap numbers={numbers} signals={signals} compact />
+        </div>
+        <div className="mt-4 grid gap-3">
+          {numbers.map((item) => (
+            <div key={item.label} className="glass-card-strong motion-panel-float-delayed elevate-hover rounded-[20px] p-4">
+              <div className="type-chip-label">{item.label}</div>
+              <div className="mt-2 text-3xl font-semibold leading-none text-slate-50">
+                {item.value > 0 ? item.value : '...'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,_#fcfcfd_0%,_#ffffff_100%)] p-6 shadow-[0_16px_45px_rgba(15,23,42,0.05)] sm:p-8">
+    <section className="glass-panel motion-sheen motion-panel-float rounded-[30px] p-6 sm:p-8">
       <div className="max-w-3xl">
-        <h3 className="font-serif text-3xl leading-[1.15] text-slate-950">
+        <h3 className="type-block-heading">
           Ba con số đang kéo ngày hôm nay
         </h3>
       </div>
@@ -558,69 +467,60 @@ function TodayRhythmPanel({
         {numbers.map((item) => (
           <div
             key={item.label}
-            className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]"
+            className="glass-card-strong motion-panel-float-delayed elevate-hover rounded-[24px] p-5"
           >
-            <div className="text-sm font-medium text-slate-500">{item.label}</div>
-            <div className="mt-3 font-serif text-5xl leading-none text-slate-950">
+            <div className="type-chip-label">{item.label}</div>
+            <div className="mt-3 text-5xl font-semibold leading-none text-slate-50">
               {item.value > 0 ? item.value : '...'}
             </div>
           </div>
         ))}
       </div>
 
-      {signals.length > 0 && (
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          {signals.slice(0, 3).map((signal) => (
-            <div key={signal.label} className="rounded-[22px] border border-slate-200 bg-slate-50/70 p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-base font-medium text-slate-900">{signal.label}</div>
-                <SignalDots intensity={signal.intensity} />
-              </div>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{signal.meaning}</p>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="mt-6">
+        <DayOrbitMap numbers={numbers} signals={signals} />
+      </div>
+
     </section>
   );
 }
 
-function PracticalFocusPanel({
+export function PracticalFocusPanel({
   items,
 }: {
   items: PracticalGuidanceItem[];
 }) {
   const toneMap: Record<PracticalGuidanceItem['area'], { shell: string; badge: string; label: string }> = {
     micro_action: {
-      shell: 'border-emerald-100 bg-emerald-50/70',
-      badge: 'bg-white text-emerald-700 ring-emerald-100',
+      shell: 'border-emerald-300/16 bg-[linear-gradient(180deg,_rgba(16,185,129,0.08)_0%,_rgba(15,23,42,0.02)_100%)]',
+      badge: 'bg-emerald-400/12 text-emerald-200 ring-emerald-300/20',
       label: 'Một bước nhỏ',
     },
     work: {
-      shell: 'border-sky-100 bg-sky-50/70',
-      badge: 'bg-white text-sky-700 ring-sky-100',
+      shell: 'border-sky-300/16 bg-[linear-gradient(180deg,_rgba(56,189,248,0.08)_0%,_rgba(15,23,42,0.02)_100%)]',
+      badge: 'bg-sky-400/12 text-sky-200 ring-sky-300/20',
       label: 'Trong công việc',
     },
     relationships: {
-      shell: 'border-rose-100 bg-rose-50/70',
-      badge: 'bg-white text-rose-700 ring-rose-100',
+      shell: 'border-rose-300/16 bg-[linear-gradient(180deg,_rgba(251,113,133,0.08)_0%,_rgba(15,23,42,0.02)_100%)]',
+      badge: 'bg-rose-400/12 text-rose-200 ring-rose-300/20',
       label: 'Trong quan hệ',
     },
     self_regulation: {
-      shell: 'border-violet-100 bg-violet-50/70',
-      badge: 'bg-white text-violet-700 ring-violet-100',
+      shell: 'border-violet-300/16 bg-[linear-gradient(180deg,_rgba(167,139,250,0.08)_0%,_rgba(15,23,42,0.02)_100%)]',
+      badge: 'bg-violet-400/12 text-violet-200 ring-violet-300/20',
       label: 'Giữ nhịp cho mình',
     },
   };
 
   return (
-    <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,_#f8fffb_0%,_#ffffff_100%)] p-6 shadow-[0_16px_45px_rgba(15,23,42,0.05)] sm:p-8">
+    <section className="glass-panel motion-sheen overflow-hidden rounded-[30px] p-6 sm:p-8">
       <div className="max-w-3xl">
         <div>
-          <h3 className="font-serif text-3xl leading-[1.15] text-slate-950">
+          <h3 className="type-block-heading">
             Nếu muốn áp dụng ngay
           </h3>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
             Chỉ cần chọn một điều thấy đúng với mình lúc này.
           </p>
         </div>
@@ -632,21 +532,21 @@ function PracticalFocusPanel({
           return (
             <div
               key={`${item.area}-${index}`}
-              className={`rounded-[26px] border p-6 shadow-[0_14px_35px_rgba(15,23,42,0.04)] ${tone.shell}`}
+              className={`glass-card-strong motion-panel-float-delayed elevate-hover rounded-[26px] p-6 ${tone.shell}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <span className={`rounded-full px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] ring-1 ${tone.badge}`}>
                   {tone.label}
                 </span>
-                <span className="text-xs font-medium text-slate-500">
+                <span className="text-xs text-slate-400">
                   {item.timing}
                 </span>
               </div>
 
-              <h4 className="mt-4 text-2xl font-semibold leading-8 text-slate-900">
+              <h4 className="mt-4 text-2xl font-semibold leading-8 text-slate-50">
                 {item.title}
               </h4>
-              <p className="mt-4 text-base leading-8 text-slate-700">
+              <p className="mt-4 text-base leading-8 text-slate-200">
                 {item.suggestion}
               </p>
             </div>
@@ -657,32 +557,19 @@ function PracticalFocusPanel({
   );
 }
 
-function SignalDots({ intensity }: { intensity: 1 | 2 | 3 | 4 | 5 }) {
-  return (
-    <div className="flex gap-1">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <span
-          key={index}
-          className={`h-2.5 w-5 rounded-full ${index < intensity ? 'bg-[linear-gradient(90deg,_#38bdf8_0%,_#f59e0b_100%)]' : 'bg-white/15'}`}
-        />
-      ))}
-    </div>
-  );
-}
-
-function GuidedReadingPanel({
+export function GuidedReadingPanel({
   sections,
 }: {
   sections: NarrativeSectionModel[];
 }) {
   return (
-    <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.05)]">
-      <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
+    <section className="glass-panel motion-sheen overflow-hidden rounded-[30px]">
+      <div className="border-b border-white/10 px-6 py-6 sm:px-8">
         <div className="max-w-3xl">
-          <h3 className="font-serif text-3xl leading-[1.15] text-slate-950">
+          <h3 className="type-block-heading">
             Nhìn kỹ hơn
           </h3>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
+          <p className="mt-3 text-sm leading-7 text-slate-400">
             Mỗi phần chỉ giữ lại một lớp nghĩa thật sự đáng đọc.
           </p>
         </div>
@@ -701,17 +588,17 @@ function GuidedReadingPanel({
   );
 }
 
-function ClosingReflection({
+export function ClosingReflection({
   closingSignal,
 }: {
   closingSignal: InsightPresentationBlocks['closing_signal'];
 }) {
   return (
-    <section className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_#0f172a_0%,_#111827_100%)] p-6 text-white shadow-[0_20px_55px_rgba(15,23,42,0.24)] sm:p-8">
+    <section className="glass-dark motion-panel-float rounded-[28px] p-6 text-white sm:p-8">
       <div className="text-sm font-medium text-slate-300">
         {closingSignal.title || 'Điều đáng giữ lại'}
       </div>
-      <p className="mt-4 max-w-3xl font-serif text-3xl leading-[1.25] text-slate-100">
+      <p className="mt-4 max-w-3xl text-3xl font-semibold leading-[1.25] text-slate-100">
         {closingSignal.phrase}
       </p>
     </section>

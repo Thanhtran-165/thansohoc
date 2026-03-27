@@ -18,6 +18,40 @@ Biến báo cáo hằng ngày từ kiểu "AI viết từ vài con số" thành 
   - Hidden passion
   - Balance number
 
+## Meta-Methodology giữa các hệ
+
+Hệ hiện tại không còn chỉ có một trường phái đơn lẻ. Tuy nhiên, báo cáo hằng ngày không được phép trở thành một nơi "đọc tất cả mọi thứ cùng lúc". Vì vậy:
+
+- `primary_system`: luôn là `Pythagorean daily stack`
+  - Personal Day
+  - Personal Month
+  - Current Challenge / Current Pinnacle
+  - Personal Year
+  - Life Path
+- `supporting_lenses`: chỉ được kéo vào khi thật sự làm rõ ngày hôm đó
+  - `Essence / Transits`
+  - `Lo Shu / biểu đồ mũi tên`
+  - `Name variants / Chaldean`
+
+### Vai trò từng hệ phụ
+
+- `Essence / Transits`
+  - vai trò: bối cảnh chu kỳ dài hơn
+  - được dùng khi cần nối nhịp hôm nay với giai đoạn sống hiện tại
+- `Lo Shu / biểu đồ mũi tên`
+  - vai trò: nét bẩm sinh, điểm mạnh / điểm thiếu quen thuộc
+  - được dùng khi nó giải thích cách người dùng thường phản ứng với nhịp của ngày
+- `Name variants / Chaldean`
+  - vai trò: lớp bản sắc và cách biểu đạt hiện tại
+  - được dùng khi tên đang dùng thật sự tạo ra một dịch chuyển đáng kể so với tên khai sinh
+
+### Guardrails
+
+- Một daily report phải luôn đứng được chỉ với `primary_system`.
+- Lớp mở rộng chỉ được xuất hiện nếu nó thêm góc nhìn mới, không phải để lặp lại điều daily stack đã nói.
+- Trong một báo cáo ngày, tối đa nên có `2 supporting lenses` được gọi tên rõ.
+- Nếu một lens không giúp làm rõ lực chính, lực nền, hoặc điểm giằng co của ngày, thì nó phải ở tab riêng chứ không chen vào daily insight.
+
 ## Thứ bậc luận giải
 
 1. Personal Day: lực mở đầu của ngày

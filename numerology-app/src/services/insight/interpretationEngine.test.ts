@@ -45,6 +45,66 @@ function buildContext(overrides: Partial<NumerologyContext>): NumerologyContext 
       current_pinnacle: { cycle: 2, number: 7, from_age: 33, to_age: 41 },
       current_challenge: { cycle: 2, number: 4, from_age: 33, to_age: 41 },
     },
+    extended: {
+      transits: {
+        methodology: 'pythagorean_name_transits',
+        current_age: 36,
+        current_year: 2026,
+        current: {
+          year: 2026,
+          age: 36,
+          letters: [
+            {
+              source: 'leading_name',
+              label: 'Tên chính',
+              letter: 't',
+              value: 2,
+              from_age: 36,
+              to_age: 39,
+            },
+          ],
+          essence_compound: 14,
+          essence_number: 5,
+        },
+        next_years: [],
+      },
+      lo_shu: {
+        methodology: 'lo_shu',
+        grid: { 1: 1, 2: 0, 3: 2, 4: 1, 5: 1, 6: 1, 7: 0, 8: 1, 9: 1 },
+        driver_number: 6,
+        conductor_number: 3,
+        present_arrows: [
+          {
+            id: '1-5-9',
+            numbers: [1, 5, 9],
+            kind: 'present',
+            label: 'mũi tên quyết tâm',
+            meaning: 'ý chí rõ ràng',
+          },
+        ],
+        missing_arrows: [
+          {
+            id: '2-5-8',
+            numbers: [2, 5, 8],
+            kind: 'missing',
+            label: 'mũi tên cảm xúc',
+            meaning: 'dễ nén cảm xúc',
+          },
+        ],
+        dominant_digits: [{ digit: 3, count: 2 }],
+        absent_digits: [2, 7],
+      },
+      name_variants: {
+        birth_name: 'Tran Dinh Thanh',
+        current_name: 'Dinh Thanh',
+        differs: true,
+        pythagorean_birth: { label: 'Tên khai sinh', raw_total: 46, reduced: 1 },
+        pythagorean_current: { label: 'Tên đang dùng', raw_total: 28, reduced: 1 },
+        chaldean_birth: { label: 'Tên khai sinh', raw_total: 31, reduced: 4 },
+        chaldean_current: { label: 'Tên đang dùng', raw_total: 23, reduced: 5 },
+        dominant_shift: 'Tên đang dùng làm lớp biểu đạt linh hoạt hơn tên khai sinh.',
+      },
+    },
     ...overrides,
   };
 }
@@ -95,5 +155,6 @@ describe('Interpretation Engine Golden Cases', () => {
     expect(blueprint.assembly_plan.some((item) => item.layer === 'deep')).toBe(true);
     expect(blueprint.assembly_plan[0].section).toBe('headline_frame');
     expect(blueprint.methodology_trace.ruling_stack[0]).toBe('personal_day');
+    expect(blueprint.meta_methodology.primary_system.id).toBe('pythagorean_daily_stack');
   });
 });

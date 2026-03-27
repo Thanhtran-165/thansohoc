@@ -57,7 +57,8 @@ function buildSyntheticWhyThisInsight(
   const numerology = calculateNumerologyContext(
     profile.full_name,
     profile.date_of_birth,
-    insightRow.date
+    insightRow.date,
+    profile.current_name
   );
 
   const blueprint = createInterpretationBlueprint({
@@ -69,6 +70,7 @@ function buildSyntheticWhyThisInsight(
     soul_urge: numerology.core.soul_urge,
     birthday_number: numerology.core.birthday_number,
     advanced: numerology.advanced,
+    extended: numerology.extended,
   });
 
   const metadata = JSON.parse(insightRow.metadata || '{}') as {

@@ -13,11 +13,13 @@ import { calculateCoreNumbers } from '@services/numerology';
 import { CoreNumerologyResult } from '@services/numerology';
 import { StylePreference, UserProfile } from '@/types';
 import messages from '@localization';
+import { PageHero, PageSection, PageWrap } from '@components/layout/ScreenPrimitives';
 
 type EditMode = 'none' | 'personal' | 'preferences';
 
 interface PersonalForm {
   full_name: string;
+  current_name: string;
   date_of_birth: string;
 }
 
@@ -50,8 +52,8 @@ export default function Profile() {
 
   if (!profile) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">{messages.profile.noProfile}</p>
+      <div className="glass-panel py-12 text-center">
+        <p className="text-slate-400">{messages.profile.noProfile}</p>
       </div>
     );
   }
@@ -60,6 +62,7 @@ export default function Profile() {
   const handleStartPersonalEdit = () => {
     setPersonalForm({
       full_name: profile.full_name,
+      current_name: profile.current_name ?? profile.full_name,
       date_of_birth: profile.date_of_birth,
     });
     setEditMode('personal');
@@ -126,33 +129,33 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{messages.profile.title}</h1>
-        <p className="text-gray-600 mt-1">{messages.profile.subtitle}</p>
-      </div>
+    <PageWrap>
+      <PageHero
+        eyebrow={messages.profile.title}
+        title={messages.profile.title}
+        subtitle={messages.profile.subtitle}
+        accent="violet"
+      />
 
       {/* Save Status */}
       {saveStatus === 'success' && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+        <div className="glass-panel section-reveal rounded-[24px] border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
           {messages.profile.saved}
         </div>
       )}
       {saveStatus === 'error' && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="glass-panel section-reveal rounded-[24px] border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
           {messages.profile.saveError}
         </div>
       )}
 
       {/* Personal Info Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <PageSection eyebrow={messages.profile.personalInfo}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">{messages.profile.personalInfo}</h3>
           {editMode !== 'personal' && (
             <button
               onClick={handleStartPersonalEdit}
-              className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
+              className="button-secondary-dark"
             >
               {messages.profile.editPersonalInfo}
             </button>
@@ -161,7 +164,7 @@ export default function Profile() {
 
         {/* Avatar */}
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-500 rounded-full flex items-center justify-center shrink-0">
+          <div className="glass-card-strong flex h-16 w-16 shrink-0 items-center justify-center rounded-full">
             <span className="text-white font-bold text-xl">
               {profile.full_name.charAt(0).toUpperCase()}
             </span>
@@ -170,43 +173,55 @@ export default function Profile() {
             {editMode === 'personal' && personalForm ? (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="field-label">
                     {messages.profile.fullName}
                   </label>
                   <input
                     type="text"
                     value={personalForm.full_name}
                     onChange={(e) => setPersonalForm({ ...personalForm, full_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="field-dark"
                     placeholder={messages.profile.fullNamePlaceholder}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="field-label">
+                    {messages.profile.currentName}
+                  </label>
+                  <input
+                    type="text"
+                    value={personalForm.current_name}
+                    onChange={(e) => setPersonalForm({ ...personalForm, current_name: e.target.value })}
+                    className="field-dark"
+                    placeholder={messages.profile.currentNamePlaceholder}
+                  />
+                </div>
+                <div>
+                  <label className="field-label">
                     {messages.profile.dateOfBirth}
                   </label>
                   <input
                     type="date"
                     value={personalForm.date_of_birth}
                     onChange={(e) => setPersonalForm({ ...personalForm, date_of_birth: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="field-dark"
                   />
                 </div>
-                <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                <div className="rounded-[18px] border border-amber-300/20 bg-amber-400/10 p-3 text-xs text-amber-200">
                   {messages.profile.recalcWarning}
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={handleCancelEdit}
                     disabled={isSaving}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
+                    className="button-ghost-dark"
                   >
                     {messages.actions.cancel}
                   </button>
                   <button
                     onClick={handleSavePersonal}
                     disabled={isSaving || !personalForm.full_name || !personalForm.date_of_birth}
-                    className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="button-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSaving ? messages.journal.saving : messages.profile.saveChanges}
                   </button>
@@ -214,8 +229,13 @@ export default function Profile() {
               </div>
             ) : (
               <>
-                <h4 className="text-lg font-semibold text-gray-900">{profile.full_name}</h4>
-                <p className="text-gray-500 text-sm">
+                <h4 className="text-lg font-semibold text-slate-50">{profile.full_name}</h4>
+                {(profile.current_name ?? profile.full_name) !== profile.full_name && (
+                  <p className="text-sm text-slate-400">
+                    {messages.profile.currentName}: {profile.current_name}
+                  </p>
+                )}
+                <p className="text-sm text-slate-400">
                   {messages.profile.born}: {new Date(profile.date_of_birth).toLocaleDateString('vi-VN')}
                 </p>
               </>
@@ -225,31 +245,30 @@ export default function Profile() {
 
         {/* Cyclic Numbers */}
         {!editMode && todayInsight && (
-          <div className="flex gap-4 text-sm pt-2 border-t border-gray-100">
-            <span className="text-gray-500">
+          <div className="flex gap-4 border-t border-white/8 pt-2 text-sm">
+            <span className="text-slate-400">
               {messages.dashboard.numerology.personalDay}:{' '}
-              <span className="font-medium text-primary-600">{todayInsight.personal_day}</span>
+              <span className="font-medium text-slate-100">{todayInsight.personal_day}</span>
             </span>
-            <span className="text-gray-500">
+            <span className="text-slate-400">
               {messages.dashboard.numerology.personalMonth}:{' '}
-              <span className="font-medium text-primary-600">{todayInsight.personal_month}</span>
+              <span className="font-medium text-slate-100">{todayInsight.personal_month}</span>
             </span>
-            <span className="text-gray-500">
+            <span className="text-slate-400">
               {messages.dashboard.numerology.personalYear}:{' '}
-              <span className="font-medium text-primary-600">{todayInsight.personal_year}</span>
+              <span className="font-medium text-slate-100">{todayInsight.personal_year}</span>
             </span>
           </div>
         )}
-      </div>
+      </PageSection>
 
       {/* Preferences Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <PageSection eyebrow={messages.profile.preferences}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">{messages.profile.preferences}</h3>
           {editMode !== 'preferences' && (
             <button
               onClick={handleStartPreferencesEdit}
-              className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
+              className="button-secondary-dark"
             >
               {messages.profile.editPreferences}
             </button>
@@ -260,13 +279,13 @@ export default function Profile() {
           <div className="space-y-4">
             {/* Style Preference */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="field-label">
                 {messages.profile.insightStyle}
               </label>
               <select
                 value={preferencesForm.style_preference}
                 onChange={(e) => setPreferencesForm({ ...preferencesForm, style_preference: e.target.value as StylePreference })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="field-dark"
               >
                 <option value="gentle">{messages.onboarding.preferences.styles.gentle.label}</option>
                 <option value="direct">{messages.onboarding.preferences.styles.direct.label}</option>
@@ -280,14 +299,14 @@ export default function Profile() {
               <button
                 onClick={handleCancelEdit}
                 disabled={isSaving}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
+                className="button-ghost-dark"
               >
                 {messages.actions.cancel}
               </button>
               <button
                 onClick={handleSavePreferences}
                 disabled={isSaving}
-                className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-medium rounded-lg transition-colors"
+                className="button-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSaving ? messages.journal.saving : messages.profile.saveChanges}
               </button>
@@ -305,14 +324,10 @@ export default function Profile() {
             />
           </div>
         )}
-      </div>
+      </PageSection>
 
       {/* Numerology Profile */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {messages.profile.coreNumbers}
-        </h3>
-
+      <PageSection eyebrow={messages.profile.coreNumbers}>
         {coreNumbers ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <CoreNumberCard
@@ -347,12 +362,12 @@ export default function Profile() {
             />
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="py-8 text-center text-slate-400">
             <p>{messages.profile.completeProfile}</p>
           </div>
         )}
-      </div>
-    </div>
+      </PageSection>
+    </PageWrap>
   );
 }
 
@@ -370,9 +385,9 @@ function formatStylePreference(style: StylePreference): string {
 // Sub-components
 function PreferenceRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-      <span className="text-gray-600">{label}</span>
-      <span className="font-medium text-gray-900">{value}</span>
+    <div className="flex items-center justify-between border-b border-white/8 py-3 last:border-0">
+      <span className="text-slate-400">{label}</span>
+      <span className="font-medium text-slate-100">{value}</span>
     </div>
   );
 }
@@ -389,28 +404,28 @@ function CoreNumberCard({
   const isMaster = value === 11 || value === 22 || value === 33;
 
   return (
-    <div className="text-center p-4 bg-gray-50 rounded-lg">
-      <div className={`text-2xl font-bold mb-1 ${isMaster ? 'text-accent-500' : 'text-primary-600'}`}>
+    <div className="glass-card rounded-[24px] p-4 text-center">
+      <div className={`mb-1 text-2xl font-bold ${isMaster ? 'text-amber-200' : 'text-slate-50'}`}>
         {value}
-        {isMaster && <span className="text-xs ml-1 text-accent-400">{messages.profile.masterNumber}</span>}
+        {isMaster && <span className="ml-1 text-xs text-amber-300">{messages.profile.masterNumber}</span>}
       </div>
-      <div className="text-sm font-medium text-gray-900">{label}</div>
-      <div className="text-xs text-gray-500 mt-1">{description}</div>
+      <div className="text-sm font-medium text-slate-100">{label}</div>
+      <div className="mt-1 text-xs text-slate-400">{description}</div>
     </div>
   );
 }
 
 function ProfileSkeleton() {
   return (
-    <div className="max-w-2xl mx-auto animate-pulse">
-      <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/3 mb-8"></div>
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+    <div className="mx-auto max-w-2xl animate-pulse">
+      <div className="mb-2 h-8 w-1/4 rounded bg-white/10"></div>
+      <div className="mb-8 h-4 w-1/3 rounded bg-white/6"></div>
+      <div className="glass-panel mb-6 rounded-[28px] p-6">
         <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-gray-200 rounded-full"></div>
+          <div className="h-20 w-20 rounded-full bg-white/10"></div>
           <div className="flex-1">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="mb-2 h-6 w-1/3 rounded bg-white/10"></div>
+            <div className="h-4 w-1/4 rounded bg-white/6"></div>
           </div>
         </div>
       </div>

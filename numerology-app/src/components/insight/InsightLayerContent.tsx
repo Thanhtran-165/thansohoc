@@ -17,15 +17,15 @@ interface InsightLayerContentProps {
 const claimTypeConfig: Record<ClaimType, { pattern: RegExp; color: string }> = {
   calculated: {
     pattern: /\[Calculated\]/g,
-    color: 'bg-blue-100 text-blue-800',
+    color: 'border border-emerald-300/20 bg-emerald-400/10 text-emerald-200',
   },
   interpreted: {
     pattern: /\[Interpreted\]/g,
-    color: 'bg-purple-100 text-purple-800',
+    color: 'border border-sky-300/20 bg-sky-400/10 text-sky-200',
   },
   exploratory: {
     pattern: /\[Exploratory\]/g,
-    color: 'bg-amber-100 text-amber-800',
+    color: 'border border-violet-300/20 bg-violet-400/10 text-violet-200',
   },
 };
 
@@ -98,13 +98,13 @@ export function InsightLayerContent({
       <span key={index} className="inline">
         <button
           onClick={() => setExpandedClaim(isExpanded ? null : segment.rawText)}
-          className={`rounded px-2 py-0.5 text-sm transition-colors ${config.color} hover:opacity-80`}
+          className={`rounded-full px-2 py-0.5 text-sm transition-colors ${config.color} hover:opacity-80`}
         >
           <ClaimBadge type={segment.type} confidence={claimData?.confidence} />
         </button>
         <span className="ml-1">{segment.text}</span>
         {isExpanded && claimData && (
-          <span className="ml-2 text-xs text-gray-500">
+          <span className="ml-2 text-xs text-slate-500">
             ({messages.claimTypes.confidence}: {(claimData.confidence * 100).toFixed(1)}%)
           </span>
         )}
@@ -113,7 +113,7 @@ export function InsightLayerContent({
   };
 
   return (
-    <div className="text-gray-700 leading-relaxed">
+    <div className="leading-relaxed text-slate-300">
       <p className="whitespace-pre-wrap">
         {segments.map((segment, index) => (
           <Fragment key={index}>

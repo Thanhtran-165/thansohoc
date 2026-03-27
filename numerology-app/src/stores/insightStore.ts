@@ -99,6 +99,7 @@ async function generateAndLoadInsight(
   await service.generateDailyInsight({
     userId: profile.id,
     fullName: profile.full_name,
+    currentName: profile.current_name,
     dateOfBirth: profile.date_of_birth,
     stylePreference: profile.style_preference,
     insightLength: 'detailed',
@@ -132,7 +133,18 @@ export const useInsightStore = create<InsightState>((set, get) => ({
         `SELECT * FROM daily_insights WHERE user_id = ? AND date = ?`,
         [userId, today]
       );
-      set({ todayInsight: parseInsightRecord(insight || null), isLoading: false });
+      const parsedInsight = parseInsightRecord(insight || null);
+
+      if (parsedInsight && !parsedInsight.viewed_at) {
+        const viewedAt = new Date().toISOString();
+        dbQuery.run(
+          `UPDATE daily_insights SET viewed_at = ? WHERE id = ?`,
+          [viewedAt, parsedInsight.id]
+        );
+        parsedInsight.viewed_at = viewedAt;
+      }
+
+      set({ todayInsight: parsedInsight, isLoading: false });
     } catch (error) {
       set({ error: 'Failed to load insight', isLoading: false });
       console.error('Failed to load insight:', error);

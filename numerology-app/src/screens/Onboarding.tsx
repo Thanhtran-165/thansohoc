@@ -74,7 +74,7 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.2),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(251,191,36,0.18),_transparent_24%),linear-gradient(180deg,_#040b15_0%,_#08111d_45%,_#0a1424_100%)] flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         {/* Progress indicator */}
         <div className="mb-8">
@@ -84,25 +84,25 @@ export default function Onboarding() {
                 key={step}
                 className={`flex items-center ${
                   index <= CURRENT_STEPS.indexOf(currentStep)
-                    ? 'text-primary-600'
-                    : 'text-gray-300'
+                    ? 'text-slate-100'
+                    : 'text-slate-500'
                 }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
                     index <= CURRENT_STEPS.indexOf(currentStep)
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-200 text-gray-500'
+                      ? 'border border-white/20 bg-white/14 text-white shadow-[0_10px_30px_rgba(56,189,248,0.18)]'
+                      : 'border border-white/10 bg-white/6 text-slate-500'
                   }`}
                 >
                   {index + 1}
                 </div>
                 {index < 3 && (
                   <div
-                    className={`w-16 h-1 mx-2 ${
+                    className={`mx-2 h-px w-16 ${
                       index < CURRENT_STEPS.indexOf(currentStep)
-                        ? 'bg-primary-500'
-                        : 'bg-gray-200'
+                        ? 'bg-gradient-to-r from-sky-300/70 to-amber-300/70'
+                        : 'bg-white/10'
                     }`}
                   />
                 )}
@@ -112,7 +112,7 @@ export default function Onboarding() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="glass-panel rounded-[32px] p-8">
           {currentStep === 'welcome' && (
             <WelcomeStep onNext={handleNext} />
           )}
@@ -147,18 +147,18 @@ export default function Onboarding() {
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <div className="text-center">
-      <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+      <div className="glass-card-strong mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl">
         <span className="text-white font-bold text-2xl">N</span>
       </div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">
+      <h2 className="mb-4 text-2xl font-bold text-slate-50">
         {messages.onboarding.welcome.title}
       </h2>
-      <p className="text-gray-600 mb-8">
+      <p className="mb-8 text-slate-300">
         {messages.onboarding.welcome.description}
       </p>
       <button
         onClick={onNext}
-        className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors"
+        className="button-primary-dark w-full"
       >
         {messages.onboarding.welcome.button}
       </button>
@@ -177,36 +177,36 @@ function ProfileStep({
 }) {
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-2">
+      <h2 className="mb-2 text-xl font-bold text-slate-50">
         {messages.onboarding.profile.title}
       </h2>
-      <p className="text-gray-600 mb-6">
+      <p className="mb-6 text-slate-300">
         {messages.onboarding.profile.description}
       </p>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="field-label">
             {messages.onboarding.profile.fullName}
           </label>
           <input
             type="text"
             value={formData.full_name}
             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="field-dark"
             placeholder={messages.onboarding.profile.fullNamePlaceholder}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="field-label">
             {messages.onboarding.profile.dateOfBirth}
           </label>
           <input
             type="date"
             value={formData.date_of_birth}
             onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="field-dark"
           />
         </div>
       </div>
@@ -214,7 +214,7 @@ function ProfileStep({
       <button
         onClick={onNext}
         disabled={!formData.full_name || !formData.date_of_birth}
-        className="w-full mt-6 py-3 px-4 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
+        className="button-primary-dark mt-6 w-full disabled:cursor-not-allowed disabled:opacity-50"
       >
         {messages.actions.continue}
       </button>
@@ -242,15 +242,15 @@ function PreferencesStep({
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-2">
+      <h2 className="mb-2 text-xl font-bold text-slate-50">
         {messages.onboarding.preferences.title}
       </h2>
-      <p className="text-gray-600 mb-6">
+      <p className="mb-6 text-slate-300">
         {messages.onboarding.preferences.description}
       </p>
 
       <div className="space-y-4 mb-6">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="field-label">
           {messages.onboarding.preferences.insightStyle}
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -258,14 +258,14 @@ function PreferencesStep({
             <button
               key={style.value}
               onClick={() => setFormData({ ...formData, style_preference: style.value })}
-              className={`p-4 rounded-lg border-2 text-left transition-colors ${
+              className={`rounded-[22px] border px-4 py-4 text-left transition-all ${
                 formData.style_preference === style.value
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'glass-card-strong border-sky-300/35 shadow-[0_14px_36px_rgba(56,189,248,0.18)]'
+                  : 'glass-card border-white/10 hover:border-white/16 hover:bg-white/[0.08]'
               }`}
             >
-              <div className="font-medium text-gray-900">{style.label}</div>
-              <div className="text-xs text-gray-500">{style.description}</div>
+              <div className="text-sm font-semibold text-slate-50">{style.label}</div>
+              <div className="mt-1 text-xs text-slate-400">{style.description}</div>
             </button>
           ))}
         </div>
@@ -274,7 +274,7 @@ function PreferencesStep({
       <button
         onClick={onNext}
         disabled={isLoading}
-        className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white font-medium rounded-lg transition-colors"
+        className="button-primary-dark w-full disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isLoading
           ? messages.onboarding.preferences.settingUp
@@ -287,20 +287,20 @@ function PreferencesStep({
 function CompleteStep({ onNext }: { onNext: () => void }) {
   return (
     <div className="text-center">
-      <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-        <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="glass-card-strong mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border-emerald-300/30 bg-emerald-400/10">
+        <svg className="h-8 w-8 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">
+      <h2 className="mb-4 text-2xl font-bold text-slate-50">
         {messages.onboarding.complete.title}
       </h2>
-      <p className="text-gray-600 mb-8">
+      <p className="mb-8 text-slate-300">
         {messages.onboarding.complete.description}
       </p>
       <button
         onClick={onNext}
-        className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors"
+        className="button-primary-dark w-full"
       >
         {messages.onboarding.complete.button}
       </button>

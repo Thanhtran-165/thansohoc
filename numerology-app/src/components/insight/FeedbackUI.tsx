@@ -104,7 +104,7 @@ export function FeedbackUI({
               className={`w-5 h-5 ${
                 value <= (hoverRating || rating)
                   ? 'text-amber-400 fill-current'
-                  : 'text-gray-300'
+                  : 'text-slate-600'
               }`}
               viewBox="0 0 24 24"
               fill={value <= (hoverRating || rating) ? 'currentColor' : 'none'}
@@ -123,10 +123,10 @@ export function FeedbackUI({
 
       {/* Expanded Feedback Form */}
       {showExpanded && !compact && (
-        <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+        <div className="mt-4 space-y-4 border-t border-white/8 pt-4">
           {/* Most Useful Claim Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="field-label">
               {messages.feedback.mostUsefulClaim}
             </label>
             <div className="flex gap-2" role="group" aria-label="Select most useful claim type">
@@ -136,10 +136,10 @@ export function FeedbackUI({
                   onClick={() => setMostUsefulClaim(type)}
                   aria-pressed={mostUsefulClaim === type}
                   aria-label={claimTypeLabels[type]}
-                  className={`px-3 py-1.5 text-sm rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
                     mostUsefulClaim === type
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'border-sky-300/35 bg-sky-400/12 text-sky-100'
+                      : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
                   }`}
                 >
                   {claimTypeLabels[type]}
@@ -150,7 +150,7 @@ export function FeedbackUI({
 
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="field-label">
               {messages.feedback.tagLabels}
             </label>
             <div className="flex flex-wrap gap-2" role="group" aria-label="Feedback tags">
@@ -159,10 +159,10 @@ export function FeedbackUI({
                   key={tag}
                   onClick={() => toggleTag(tag)}
                   aria-pressed={selectedTags.includes(tag)}
-                  className={`px-3 py-1 text-sm rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  className={`rounded-full border px-3 py-1 text-sm transition-colors ${
                     selectedTags.includes(tag)
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'border-sky-300/35 bg-sky-400/12 text-sky-100'
+                      : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]'
                   }`}
                 >
                   {tag}
@@ -173,14 +173,14 @@ export function FeedbackUI({
 
           {/* Feedback Text */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="field-label">
               {messages.feedback.additionalFeedback}
             </label>
             <textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder={messages.feedback.placeholder}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+              className="field-dark min-h-[80px] resize-none"
               rows={2}
             />
           </div>
@@ -189,7 +189,7 @@ export function FeedbackUI({
           <button
             onClick={() => submitFeedback()}
             disabled={isSubmitting}
-            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+            className="button-primary-dark"
           >
             {isSubmitting ? messages.feedback.submitting : messages.feedback.submit}
           </button>

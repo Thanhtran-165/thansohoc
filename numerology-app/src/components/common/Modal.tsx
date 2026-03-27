@@ -106,7 +106,7 @@ export default function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-[rgba(2,6,23,0.76)] backdrop-blur-xl transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -118,17 +118,17 @@ export default function Modal({
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId.current}
-          className={`relative bg-white rounded-xl shadow-xl w-full ${sizeStyles[size]} animate-fade-in`}
+          className={`glass-panel relative w-full rounded-[30px] border border-white/12 shadow-[0_28px_90px_rgba(2,6,23,0.65)] ${sizeStyles[size]} section-reveal`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 id={titleId.current} className="text-lg font-semibold text-gray-900">
+          <div className="flex items-center justify-between border-b border-white/8 p-6">
+            <h3 id={titleId.current} className="text-lg font-semibold text-slate-50">
               {title}
             </h3>
             <button
               onClick={onClose}
               aria-label="Close dialog"
-              className="text-gray-400 hover:text-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/6 text-slate-400 transition-colors hover:text-white"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -137,7 +137,7 @@ export default function Modal({
           </div>
 
           {/* Content */}
-          <div className="p-6">{children}</div>
+          <div className="p-6 text-slate-200">{children}</div>
         </div>
       </div>
     </div>

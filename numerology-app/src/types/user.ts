@@ -6,6 +6,7 @@ export type Language = 'vi' | 'en';
 export interface UserProfile {
   id: string;
   full_name: string;
+  current_name: string | null;
   date_of_birth: string; // ISO 8601 date
   style_preference: StylePreference;
   insight_length: InsightLength;
@@ -27,6 +28,7 @@ export interface CreateUserProfileInput {
 
 export interface UpdateUserProfileInput {
   full_name?: string;
+  current_name?: string | null;
   date_of_birth?: string;
   style_preference?: StylePreference;
   insight_length?: InsightLength;

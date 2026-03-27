@@ -578,6 +578,100 @@ function createAssemblyPlan(
   ];
 }
 
+function hasSharedDrive(a: number, b: number): boolean {
+  return semanticFor(a).drive === semanticFor(b).drive;
+}
+
+function createMetaMethodology(
+  numerology: NumerologyContext,
+  primary: InterpretationForce,
+  support: InterpretationForce,
+  friction: InterpretationForce | null
+): InterpretationBlueprint['meta_methodology'] {
+  const essenceNumber = numerology.extended.transits.current.essence_number;
+  const essenceAligned =
+    hasSharedDrive(essenceNumber, primary.number) ||
+    hasSharedDrive(essenceNumber, support.number);
+
+  const strongestLoShuDigit = numerology.extended.lo_shu.dominant_digits[0]?.digit ?? null;
+  const loShuAligned =
+    strongestLoShuDigit !== null &&
+    (strongestLoShuDigit === primary.number ||
+      strongestLoShuDigit === support.number ||
+      strongestLoShuDigit === numerology.life_path);
+
+  const loShuMissingArrow = numerology.extended.lo_shu.missing_arrows[0];
+  const loShuPresentArrow = numerology.extended.lo_shu.present_arrows[0];
+
+  const currentNameShift =
+    numerology.extended.name_variants.differs &&
+    (numerology.extended.name_variants.chaldean_current.reduced !==
+      numerology.extended.name_variants.chaldean_birth.reduced ||
+      numerology.extended.name_variants.pythagorean_current.reduced !==
+        numerology.extended.name_variants.pythagorean_birth.reduced);
+
+  const supportingLenses: InterpretationBlueprint['meta_methodology']['supporting_lenses'] = [
+    {
+      id: 'essence_transits',
+      label: 'Essence và transits',
+      role: 'contextual',
+      include_in_daily_report: essenceAligned,
+      rationale: essenceAligned
+        ? 'Essence hiện tại đang nói cùng hướng với nhịp chính của ngày, nên có thể dùng để nối ngày hôm nay với chu kỳ sống dài hơn.'
+        : 'Essence hiện tại vẫn nên được giữ như bối cảnh chu kỳ, nhưng không nên chen lên trước nhịp ngày nếu nó không thật sự đồng âm.',
+      contribution: essenceAligned
+        ? `Lớp này giúp giải thích vì sao nhịp ${primary.label.toLowerCase()} hôm nay không phải một cảm hứng rời rạc, mà nằm trong dòng chảy ${semanticFor(essenceNumber).label.toLowerCase()} dài hơn.`
+        : 'Nếu cần gọi tới, chỉ nên dùng nó như một lớp nền thời kỳ, không phải tiêu điểm của báo cáo hôm nay.',
+      caution: 'Không để essence hoặc transit cướp vai personal day trong mở đầu; chỉ nên xuất hiện từ phần sâu trở đi.',
+    },
+    {
+      id: 'lo_shu_birth_chart',
+      label: 'Lo Shu và biểu đồ mũi tên',
+      role: loShuAligned ? 'contextual' : 'tempering',
+      include_in_daily_report: Boolean(loShuAligned || loShuMissingArrow),
+      rationale: loShuAligned
+        ? 'Biểu đồ ngày sinh đang có một tín hiệu bẩm sinh trùng hoặc cộng hưởng với lực chính của ngày.'
+        : 'Lo Shu không cần lên sân khấu mỗi ngày; chỉ nên dùng khi một mũi tên thiếu hoặc trội thật sự làm rõ kiểu phản ứng quen thuộc của bạn.',
+      contribution: loShuAligned
+        ? `Có thể dùng để nói rằng nhịp hôm nay chạm vào một nét bẩm sinh quen thuộc, nhất là quanh số ${strongestLoShuDigit}.`
+        : loShuMissingArrow
+          ? `Có thể dùng như một lớp cản nền: ${loShuMissingArrow.label.toLowerCase()} khiến ngày hôm nay dễ chạm vào điểm yếu quen thuộc nếu bạn đi quá tay.`
+          : loShuPresentArrow
+            ? `Nếu cần thêm một nét tính cách nền, ${loShuPresentArrow.label.toLowerCase()} là tín hiệu tự nhiên nhất để gọi ra.`
+            : 'Không có lý do đủ mạnh để đưa Lo Shu lên trong báo cáo hằng ngày.',
+      caution: 'Lo Shu là lăng kính tính khí bẩm sinh; không được biến nó thành hệ chính của báo cáo ngày.',
+    },
+    {
+      id: 'name_variants',
+      label: 'Tên đang dùng và Chaldean',
+      role: 'identity',
+      include_in_daily_report: currentNameShift,
+      rationale: currentNameShift
+        ? 'Tên đang dùng đang tạo ra một lớp dịch chuyển về cách bạn tự trình diện hoặc được gọi trong đời sống hiện tại.'
+        : 'Lớp tên nên ở nền, chỉ kéo vào khi sự khác biệt giữa tên khai sinh và tên đang dùng thực sự đáng kể.',
+      contribution: currentNameShift
+        ? numerology.extended.name_variants.dominant_shift
+        : 'Nếu không có dịch chuyển đủ rõ, chỉ giữ lớp tên như một tab riêng để tham khảo sâu hơn.',
+      caution: 'Không dùng Chaldean hoặc tên đang dùng để lật kết luận của Pythagorean daily stack; chỉ dùng như lăng kính bổ sung về bản sắc và cách tự biểu đạt.',
+    },
+  ];
+
+  return {
+    primary_system: {
+      id: 'pythagorean_daily_stack',
+      label: 'Pythagorean daily stack',
+      rationale:
+        'Daily report phải được neo vào personal day, personal month, challenge/pinnacle và personal year trước; đó là trục gần ngày nhất và ổn định nhất cho báo cáo hằng ngày.',
+    },
+    supporting_lenses: supportingLenses,
+    synthesis_rule:
+      'Bắt đầu từ daily stack của Pythagorean. Chỉ kéo thêm tối đa hai lăng kính hỗ trợ, và chỉ khi chúng thêm một lớp nghĩa mới thay vì nhắc lại điều daily stack đã nói.',
+    dilution_guardrail: friction
+      ? `Nếu một lăng kính mở rộng không giúp làm rõ lực chính ${primary.label.toLowerCase()}, nền ${support.label.toLowerCase()} hoặc ma sát ${friction.label.toLowerCase()}, thì không được đưa nó vào daily insight.`
+      : `Nếu một lăng kính mở rộng không giúp làm rõ lực chính ${primary.label.toLowerCase()} hoặc nền ${support.label.toLowerCase()}, thì không được đưa nó vào daily insight.`,
+  };
+}
+
 export function createInterpretationBlueprint(
   numerology: NumerologyContext
 ): InterpretationBlueprint {
@@ -650,6 +744,7 @@ export function createInterpretationBlueprint(
   const reportArchetype = createReportArchetype(pattern);
   const sectionPlan = createSectionPlan(primaryForce, firstSupport, firstFriction, pattern);
   const assemblyPlan = createAssemblyPlan(sectionPlan, reportArchetype, conflictGrammar);
+  const metaMethodology = createMetaMethodology(numerology, primaryForce, firstSupport, firstFriction);
 
   const centralDynamic = `Trục chính của hôm nay là ${primaryForce.label.toLowerCase()} được đặt trong bối cảnh ${firstSupport.label.toLowerCase()}, theo pattern ${pattern.label} và archetype ${reportArchetype.label}.`;
 
@@ -665,6 +760,9 @@ export function createInterpretationBlueprint(
     'Nếu có ma sát giữa nhịp ngắn hạn và nhịp dài hạn, phải gọi tên sự giằng co đó thay vì gom thành một câu khái quát.',
     'Karmic lesson/debt chỉ nên được dùng như lớp nhấn hoặc lớp cản, không thay thế trục chính của ngày.',
     'Headline và theme phải là kết luận ngôn ngữ của pattern, không phải nhãn dịch thô từ tên lực.',
+    'Pythagorean daily stack luôn là trục chính của báo cáo ngày.',
+    'Essence/transits, Lo Shu và lớp tên chỉ được kéo vào khi chúng thêm góc nhìn thật sự mới cho ngày hôm đó.',
+    'Không để lớp mở rộng làm loãng báo cáo: tối đa hai lăng kính hỗ trợ trong một bản đọc hằng ngày.',
   ];
 
   return {
@@ -692,6 +790,7 @@ export function createInterpretationBlueprint(
       ],
       do_not_overweight: ['karmic_lesson', 'karmic_debt', 'hidden_passion'],
     },
+    meta_methodology: metaMethodology,
     methodology_notes: methodologyNotes,
   };
 }
